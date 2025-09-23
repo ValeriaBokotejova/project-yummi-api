@@ -23,7 +23,7 @@ app.use((_, res) => {
 
 app.use(errorHandler);
 
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   const { status = 500, message = 'Server error' } = err;
   res.status(status).json({ message });
 });

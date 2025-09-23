@@ -14,7 +14,7 @@ paths:
       summary: Health check
       description: Перевіряє, чи працює сервер
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -47,9 +47,9 @@ paths:
                   type: string
                   example: secret123
       responses:
-        "201":
+        '201':
           description: User created
-        "400":
+        '400':
           description: Validation error
 
   /auth/login:
@@ -70,7 +70,7 @@ paths:
                   type: string
                   example: secret123
       responses:
-        "200":
+        '200':
           description: Success
           content:
             application/json:
@@ -79,5 +79,5 @@ paths:
                 properties:
                   token:
                     type: string
-        "401":
+        '401':
           description: Unauthorized

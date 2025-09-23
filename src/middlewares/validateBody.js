@@ -1,6 +1,6 @@
-import HttpError from "../utils/HttpError.js";
+import HttpError from '../utils/HttpError.js';
 
-const validateBody = (schema) => {
+const validateBody = schema => {
   const func = (req, _, next) => {
     const { error } = schema.validate(req.body, { abortEarly: false });
     if (error) {

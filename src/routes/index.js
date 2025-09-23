@@ -4,11 +4,11 @@ import authRouter from './authRouter.js';
 const router = express.Router();
 
 // Health check
-router.get("/health", (req, res) => {
+router.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
   });
 });
 
