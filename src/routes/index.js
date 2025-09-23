@@ -1,5 +1,6 @@
 import express from 'express';
 import authRouter from './authRouter.js';
+import recipeRouter from './recipeRouter.js';
 
 const router = express.Router();
 
@@ -13,5 +14,6 @@ router.get('/health', (req, res) => {
 });
 
 router.use('/auth', authRouter);
+router.use('/recipes', recipeRouter);
 
 export default router;
