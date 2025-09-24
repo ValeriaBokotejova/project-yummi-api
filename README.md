@@ -8,15 +8,21 @@ designed with a modular architecture for scalability and maintainability.
 
 ### Core Functionality
 
-- **Recipe Management**: Create, edit, and share recipes
+- **Recipe Management**: Create, edit, and share recipes with ingredients and instructions
 - **User Favorites**: Add recipes to personal favorites collection
 - **Social Following**: Follow other users to discover new recipes
-- **User Profiles**: Manage user accounts and preferences
+- **User Profiles**: Manage user accounts with avatars and preferences
+- **Categorized Content**: Browse recipes by categories (Seafood, Dessert, Vegan, etc.)
+- **Regional Cuisines**: Explore recipes from different areas (Italian, Thai, Mexican, etc.)
+- **User Testimonials**: Share and view testimonials about recipes
 
 ### Technical Features
 
 - **RESTful API** with Express.js
 - **PostgreSQL Database** with Sequelize ORM
+- **Database Migrations & Seeds** with Sequelize CLI
+- **UUID Primary Keys** for all entities
+- **Bcrypt Password Hashing** for secure authentication
 - **JWT Authentication** system
 - **Docker** support for development and deployment
 - **API Documentation** with Swagger/OpenAPI
@@ -25,36 +31,57 @@ designed with a modular architecture for scalability and maintainability.
 - **Code Quality** tools (ESLint, Prettier)
 - **Health Check** endpoints
 - **CORS** enabled
-- **Jest Testing Framework** (setup in progress)
+- **Jest Testing Framework** with coverage reports
 
 ## 🏗️ Project Structure
 
 ```text
 project-yummi-api/
 ├── src/
-│   ├── app.js              # Express app configuration
-│   ├── server.js           # Server entry point
-│   ├── config/             # Configuration files
-│   │   └── swagger.js      # Swagger documentation setup
-│   ├── controllers/        # Route controllers
+│   ├── app.js                      # Express app configuration
+│   ├── server.js                   # Server entry point
+│   ├── config/                     # Configuration files
+│   │   └── swagger.js              # Swagger documentation setup
+│   ├── controllers/                # Route controllers
 │   │   └── authController.js
-│   ├── db/                 # Database configuration
-│   │   └── connection.js   # Sequelize database connection
-│   ├── docs/               # API documentation
-│   ├── middlewares/        # Custom middleware
-│   │   └── errorHandler.js # Global error handling
-│   ├── routes/             # API routes
-│   │   ├── index.js        # Main router
-│   │   └── authRouter.js   # Authentication routes
-│   ├── schemas/            # Data validation schemas (Joi)
-│   ├── services/           # Business logic layer
-│   └── utils/              # Utility functions
-├── .env.example            # Environment variables template
-├── .eslintrc.json          # ESLint configuration
-├── .prettierrc.json        # Prettier configuration
-├── docker-compose.yml      # Docker services configuration
-├── Dockerfile.dev          # Development Docker configuration
-└── package.json            # Dependencies and scripts
+│   ├── db/                         # Database layer
+│   │   ├── connection.js           # Sequelize database connection
+│   │   ├── config/
+│   │   │   └── config.js           # Database configuration
+│   │   ├── migrations/             # Database migrations
+│   │   ├── models/                 # Sequelize models
+│   │   │   ├── User.js
+│   │   │   ├── Recipe.js
+│   │   │   ├── Category.js
+│   │   │   ├── Area.js
+│   │   │   ├── Ingredient.js
+│   │   │   ├── Testimonial.js
+│   │   │   ├── index.js            # Model associations
+│   │   │   └── junctions/          # Junction table models
+│   │   │       ├── Favorite.js
+│   │   │       ├── Follow.js
+│   │   │       └── RecipeIngredient.js
+│   │   └── seeders/                # Database seeders
+│   ├── docs/                       # API documentation
+│   ├── middlewares/                # Custom middleware
+│   │   └── errorHandler.js         # Global error handling
+│   ├── routes/                     # API routes
+│   │   ├── index.js                # Main router
+│   │   └── authRouter.js           # Authentication routes
+│   ├── schemas/                    # Data validation schemas (Joi)
+│   ├── services/                   # Business logic layer
+│   └── utils/                      # Utility functions
+├── data/                           # Seed data (JSON files)
+├── scripts/
+│   └── seed-if-empty.js            # Conditional seeding script
+├── .sequelizerc                    # Sequelize CLI configuration
+├── docker-entrypoint.sh            # Docker startup script
+├── .env.example                    # Environment variables template
+├── .eslintrc.json                  # ESLint configuration
+├── .prettierrc.json                # Prettier configuration
+├── docker-compose.yml              # Docker services configuration
+├── Dockerfile.dev                  # Development Docker configuration
+└── package.json                    # Dependencies and scripts
 ```
 
 ### Architecture Layers
@@ -62,8 +89,22 @@ project-yummi-api/
 - **Routes Layer** (`/routes`): HTTP request routing and endpoint definitions
 - **Controllers Layer** (`/controllers`): Request/response handling and validation
 - **Services Layer** (`/services`): Business logic and data processing
-- **Database Layer** (`/db`): Database models and connection management
+- **Database Layer** (`/db`): Database models, migrations, and seeders
 - **Middleware Layer** (`/middlewares`): Cross-cutting concerns (auth, error handling, etc.)
+
+### Database Schema
+
+The application uses a normalized PostgreSQL database with the following entities:
+
+- **Users**: User accounts with authentication
+- **Recipes**: Recipe content with instructions and metadata
+- **Categories**: Recipe categories (Seafood, Dessert, Vegan, etc.)
+- **Areas**: Cuisine regions (Italian, Thai, Mexican, etc.)
+- **Ingredients**: Ingredient database with descriptions and images
+- **Testimonials**: User reviews and testimonials
+- **Favorites**: Many-to-many relationship between users and recipes
+- **Follows**: Many-to-many relationship for user following
+- **RecipeIngredients**: Junction table with ingredient measurements
 
 ## 🛠️ Prerequisites
 
@@ -98,42 +139,283 @@ cp .env.example .env
 Required environment variables:
 
 ```bash
-# Application
-PORT=3000
-JWT_SECRET=your_jwt_secret_key
-
-# Database
+# Database Configuration
 DB_HOST=localhost
-DB_NAME=yummi
-DB_USER=your_db_user
-DB_PASS=your_db_password
 DB_PORT=5432
+DB_NAME=yummi_db
+DB_USER=postgres
+DB_PASS=your_password
 DB_SSL=false
+
+# Application Configuration
+PORT=3000
+NODE_ENV=development
+
+# JWT Configuration (add when implementing auth)
+JWT_SECRET=your_jwt_secret_key
 ```
 
-### 4. Database Setup
+### 4. Initial Database Setup
 
-Make sure PostgreSQL is running and create the database:
+#### Option A: Using Docker (Recommended)
 
 ```bash
-# Using PostgreSQL command line
-createdb yummi
+# Start PostgreSQL and the application
+docker-compose up
 
-# Or using SQL
-CREATE DATABASE yummi;
+# The docker-entrypoint.sh script will automatically:
+# 1. Run migrations
+# 2. Seed data if tables are empty
+# 3. Start the application
 ```
 
-### 5. Start Development Server
+#### Option B: Local PostgreSQL
 
 ```bash
-# Development mode with auto-restart
+# Ensure PostgreSQL is running and create database
+createdb yummi_db
+
+# Run migrations
+npx sequelize-cli db:migrate
+
+# Seed the database
+npx sequelize-cli db:seed:all
+
+# Start development server
 npm run dev
-
-# Production mode
-npm start
 ```
 
-The API will be available at `http://localhost:3000`
+## 🗄️ Database Management with Sequelize CLI
+
+This project uses Sequelize CLI for database schema management, migrations, and seeding.
+
+### Configuration
+
+The Sequelize CLI is configured via `.sequelizerc`:
+
+```javascript
+const path = require('path');
+
+module.exports = {
+  'config': path.resolve('src', 'db', 'config', 'config.js'),
+  'models-path': path.resolve('src', 'db', 'models'),
+  'seeders-path': path.resolve('src', 'db', 'seeders'),
+  'migrations-path': path.resolve('src', 'db', 'migrations')
+};
+```
+
+### Available Sequelize CLI Commands
+
+```bash
+# Migration commands
+npx sequelize-cli db:migrate              # Run pending migrations
+npx sequelize-cli db:migrate:undo         # Undo last migration
+npx sequelize-cli db:migrate:undo:all     # Undo all migrations
+npx sequelize-cli db:migrate:status       # Check migration status
+
+# Seeder commands
+npx sequelize-cli db:seed:all              # Run all seeders
+npx sequelize-cli db:seed:undo             # Undo last seeder
+npx sequelize-cli db:seed:undo:all         # Undo all seeders
+
+# Generate new files
+npx sequelize-cli migration:generate --name <name>  # Generate new migration
+npx sequelize-cli seed:generate --name <name>       # Generate new seeder
+```
+
+### Migration Overview
+
+Migrations are executed in chronological order based on timestamps:
+
+1. **20250923200100-create-users.cjs** - Users table with authentication
+2. **20250923200200-create-categories.cjs** - Recipe categories
+3. **20250923200201-create-areas.cjs** - Cuisine areas/regions
+4. **20250923200202-create-ingredients.cjs** - Ingredient database
+5. **20250923200203-create-recipes.cjs** - Recipes with foreign keys
+6. **20250923200204-create-testimonials.cjs** - User testimonials
+7. **20250923200205-create-favorites.cjs** - User favorites junction
+8. **20250923200206-create-follows.cjs** - User follows junction
+9. **20250923200207-create-recipe-ingredients.cjs** - Recipe-ingredient junction
+
+### Seeder Overview
+
+Seeders populate the database with sample data from `data/` JSON files:
+
+1. **20250923202211-seed-users.cjs** - Sample users with bcrypt-hashed passwords
+2. **20250923202219-seed-categories.cjs** - Recipe categories (Seafood, Dessert, etc.)
+3. **20250923202226-seed-areas.cjs** - Cuisine areas (Italian, Thai, Mexican, etc.)
+4. **20250923202232-seed-ingredients.cjs** - Comprehensive ingredient database
+5. **20250923202239-seed-recipes.cjs** - Sample recipes with associations
+6. **20250923202245-seed-testimonials.cjs** - User testimonials
+7. **20250923202300-seed-recipe-ingredients.cjs** - Recipe-ingredient relationships
+
+### Working with Migrations
+
+#### Creating a New Migration
+
+```bash
+# Generate migration file
+npx sequelize-cli migration:generate --name add-new-field-to-users
+
+# Edit the generated file in src/db/migrations/
+# Implement up() and down() methods
+```
+
+#### Migration Best Practices
+
+- **Always provide rollback**: Implement both `up` and `down` methods
+- **Use transactions**: Wrap multiple operations in transactions
+- **Foreign key constraints**: Define relationships with proper cascade rules
+- **UUID primary keys**: Use `gen_random_uuid()` for PostgreSQL UUIDs
+- **Timestamps**: Include `createdAt` and `updatedAt` where appropriate
+
+#### Sample Migration Structure
+
+```javascript
+'use strict';
+
+module.exports = {
+  async up(queryInterface, Sequelize) {
+    await queryInterface.createTable('table_name', {
+      id: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        allowNull: false,
+        primaryKey: true,
+      },
+      // ... other fields
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+      },
+    });
+  },
+
+  async down(queryInterface) {
+    await queryInterface.dropTable('table_name');
+  },
+};
+```
+
+### Working with Seeders
+
+#### Creating a New Seeder
+
+```bash
+# Generate seeder file
+npx sequelize-cli seed:generate --name demo-users
+
+# Edit the generated file in src/db/seeders/
+```
+
+#### Seeder Best Practices
+
+- **Use database-generated UUIDs**: `queryInterface.sequelize.literal('gen_random_uuid()')`
+- **Handle relationships**: Resolve foreign keys by querying existing data
+- **Provide rollback**: Implement proper `down` method
+- **Use sample data**: Reference JSON files in `data/` directory
+- **Hash passwords**: Use bcrypt for user passwords
+
+#### Sample Seeder Structure
+
+```javascript
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+
+module.exports = {
+  async up(queryInterface) {
+    const dataPath = path.join(process.cwd(), 'data', 'sample.json');
+    const items = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+
+    const records = items.map(item => ({
+      id: queryInterface.sequelize.literal('gen_random_uuid()'),
+      name: item.name,
+      // ... other fields
+    }));
+
+    await queryInterface.bulkInsert('table_name', records, {});
+  },
+
+  async down(queryInterface) {
+    await queryInterface.bulkDelete('table_name', null, {});
+  },
+};
+```
+
+### Database Relationships
+
+The database implements the following relationships:
+
+```
+Users (1:N) Recipes
+Users (1:N) Testimonials
+Categories (1:N) Recipes
+Areas (1:N) Recipes
+
+Users (M:N) Recipes (via Favorites)
+Users (M:N) Users (via Follows)
+Recipes (M:N) Ingredients (via RecipeIngredients)
+```
+
+### Docker Integration
+
+The Docker setup includes automatic database management:
+
+```bash
+# docker-entrypoint.sh automatically:
+echo "👉 Running migrations..."
+npx sequelize-cli db:migrate
+
+echo "👉 Running seeders if tables empty..."
+node scripts/seed-if-empty.js
+
+echo "👉 Starting app..."
+exec "$@"
+```
+
+### Troubleshooting
+
+#### Database Common Issues
+
+1. **Migration order**: Ensure migrations run in correct dependency order
+2. **Foreign key violations**: Check that referenced tables exist first
+3. **UUID generation**: Ensure PostgreSQL has `gen_random_uuid()` available
+4. **Seeder dependencies**: Run seeders after migrations complete
+5. **Environment variables**: Verify database connection settings
+
+#### Reset Database
+
+```bash
+# Undo all migrations and seeders
+npx sequelize-cli db:migrate:undo:all
+npx sequelize-cli db:seed:undo:all
+
+# Re-run everything
+npx sequelize-cli db:migrate
+npx sequelize-cli db:seed:all
+```
+
+#### Check Database Status
+
+```bash
+# View migration status
+#### Check Database Status
+
+```bash
+# View migration status
+npx sequelize-cli db:migrate:status
+
+# Connect to database
+psql -h localhost -U postgres -d yummi_db
+```
 
 ## 🐳 Docker Development
 
@@ -159,10 +441,28 @@ This will start:
 ## 📋 Available Scripts
 
 ```bash
-npm start          # Start production server
-npm run dev        # Start development server with nodemon
-npm test           # Run tests
+# Application
+npm start              # Start production server
+npm run dev            # Start development server with nodemon
+npm test               # Run tests
 npm run test:coverage  # Run tests with coverage report
+
+# Database operations (using Sequelize CLI directly)
+npx sequelize-cli db:migrate                # Run pending migrations
+npx sequelize-cli db:migrate:undo           # Undo last migration
+npx sequelize-cli db:migrate:undo:all       # Undo all migrations
+npx sequelize-cli db:migrate:status         # Check migration status
+npx sequelize-cli db:seed:all               # Run all seeders
+npx sequelize-cli db:seed:undo              # Undo last seeder
+npx sequelize-cli db:seed:undo:all          # Undo all seeders
+npx sequelize-cli migration:generate --name # Generate new migration
+npx sequelize-cli seed:generate --name      # Generate new seeder
+
+# Code quality
+npm run lint           # Check for linting issues
+npm run lint:fix       # Automatically fix linting issues
+npm run format         # Check code formatting
+npm run format:fix     # Automatically format code
 ```
 
 ## 📖 API Documentation
@@ -197,28 +497,6 @@ Interactive API documentation is available via Swagger UI:
 | `DB_PORT`    | Database port       | `5432`      | Yes      |
 | `DB_SSL`     | Enable database SSL | `false`     | No       |
 
-### Code Quality Tools
-
-- **ESLint**: JavaScript linting and code quality
-- **Prettier**: Code formatting
-- **EditorConfig**: Consistent editor configuration
-
-Run linting and formatting:
-
-```bash
-# Check for linting issues
-npm run lint
-
-# Automatically fix linting issues
-npm run lint:fix
-
-# Check code formatting
-npm run format:check
-
-# Automatically format code
-npm run format
-```
-
 ## 🗄️ Database
 
 This project uses:
@@ -235,19 +513,6 @@ The database connection is configured in `src/db/connection.js` and supports:
 - Connection validation on startup
 - Environment-based configuration
 
-### Database Migrations & Seeding
-
-**Note:** Database migration and seeding setup is currently in development.
-
-Initial database seeding script will be added to populate the database with sample data including:
-
-- Sample users and profiles
-- Sample recipes
-- User relationships (followers/following)
-- Recipe favorites
-
-\*Migration and seeding instructions: **TBD\***
-
 ## 🔒 Authentication
 
 The API implements JWT-based authentication:
@@ -260,11 +525,7 @@ Authentication endpoints are available under `/api/auth/*`.
 
 ## 🧪 Testing
 
-The project is configured with Jest testing framework.
-
-**Current Status**: Jest setup is in progress and will be configured in the next development phase.
-
-When testing is fully configured, use these commands:
+The project is configured with Jest testing framework. Use the following commands:
 
 ```bash
 # Run all tests
@@ -273,14 +534,6 @@ npm test
 # Run tests with coverage
 npm run test:coverage
 ```
-
-### Future Testing Strategy
-
-- **Unit Tests**: Controller and service layer testing
-- **Integration Tests**: Database and API endpoint testing
-- **Authentication Tests**: JWT token validation and protected routes
-- **Recipe Management Tests**: CRUD operations for recipes
-- **User Interaction Tests**: Following/favorites functionality
 
 ## 📦 Deployment
 
