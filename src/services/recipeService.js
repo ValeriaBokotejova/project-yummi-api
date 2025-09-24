@@ -51,17 +51,90 @@ export const searchRecipes = async (filters, pagination) => {
 
   const offset = (page - 1) * limit;
   
-  const orderClause = [];
+  // Handle popularity sorting with direct SQL query (like in getPopularRecipes)
   if (sort === 'popularity') {
-    // For popularity sorting, we need to add favorites count
-    includeClause.push({
-      model: Favorite,
-      as: 'usersWhoFavorited',
-      attributes: [],
-      required: false
+    // Build WHERE conditions for SQL query
+    let whereConditions = [];
+    let replacements = { limit, offset };
+    
+    if (category) {
+      whereConditions.push('r."categoryId" = :category');
+      replacements.category = category;
+    }
+    
+    if (area) {
+      whereConditions.push('r."areaId" = :area');
+      replacements.area = area;
+    }
+    
+    if (ingredient) {
+      whereConditions.push('EXISTS (SELECT 1 FROM "recipe-ingredients" ri JOIN ingredients i ON ri."ingredientId" = i.id WHERE ri."recipeId" = r.id AND i.name ILIKE :ingredient)');
+      replacements.ingredient = `%${ingredient}%`;
+    }
+    
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+    
+    // Use direct SQL query to get popular recipes with filters
+    const results = await sequelize.query(`
+      SELECT r.*, COUNT(f.id) as favorites_count
+      FROM recipes r
+      LEFT JOIN favorites f ON r.id = f."recipeId"
+      ${whereClause}
+      GROUP BY r.id
+      ORDER BY favorites_count DESC
+      LIMIT :limit OFFSET :offset
+    `, {
+      replacements,
+      type: sequelize.QueryTypes.SELECT
     });
-    orderClause.push([sequelize.fn('COUNT', sequelize.col('usersWhoFavorited.id')), 'DESC']);
-  } else if (sort === 'title') {
+
+    // Get total count with same filters
+    let countQuery = 'SELECT COUNT(*) as total FROM recipes r';
+    if (whereConditions.length > 0) {
+      countQuery += ` ${whereClause}`;
+    }
+    
+    const countResult = await sequelize.query(countQuery, {
+      replacements: Object.fromEntries(Object.entries(replacements).filter(([key]) => key !== 'limit' && key !== 'offset')),
+      type: sequelize.QueryTypes.SELECT
+    });
+    
+    const totalCount = parseInt(countResult[0].total);
+
+    // If no results, return empty array
+    if (!results || results.length === 0) {
+      return {
+        recipes: [],
+        pagination: {
+          page,
+          limit,
+          total: totalCount,
+          pages: Math.ceil(totalCount / limit)
+        }
+      };
+    }
+
+    // Get full recipe information with relations
+    const recipeIds = results.map(r => r.id);
+    const recipes = await Recipe.findAll({
+      where: { id: recipeIds },
+      include: includeClause
+    });
+
+    return {
+      recipes,
+      pagination: {
+        page,
+        limit,
+        total: totalCount,
+        pages: Math.ceil(totalCount / limit)
+      }
+    };
+  }
+
+  // Handle other sorting options with regular Sequelize query
+  const orderClause = [];
+  if (sort === 'title') {
     orderClause.push(['title', 'ASC']);
   } else {
     orderClause.push(['createdAt', 'DESC']);
@@ -75,22 +148,6 @@ export const searchRecipes = async (filters, pagination) => {
     offset,
     distinct: true
   };
-
-  // Add GROUP BY for popularity sorting
-  if (sort === 'popularity') {
-    queryOptions.group = [
-      'Recipe.id',
-      'owner.id',
-      'category.id', 
-      'area.id',
-      'ingredients.id',
-      'ingredients->RecipeIngredient.recipeId',
-      'ingredients->RecipeIngredient.ingredientId',
-      'ingredients->RecipeIngredient.measure',
-      'usersWhoFavorited.id'
-    ];
-    queryOptions.subQuery = false;
-  }
 
   const { count, rows: recipes } = await Recipe.findAndCountAll(queryOptions);
 
