@@ -32,7 +32,7 @@ export const searchRecipes = async (filters, pagination) => {
     }
   ];
 
-  // Додаємо фільтри
+  // Add filters
   if (category) {
     whereClause.categoryId = category;
   }
@@ -53,7 +53,7 @@ export const searchRecipes = async (filters, pagination) => {
   
   const orderClause = [];
   if (sort === 'popularity') {
-    // Для сортування за популярністю потрібно додати підрахунок favorites
+    // For popularity sorting, we need to add favorites count
     includeClause.push({
       model: Favorite,
       as: 'usersWhoFavorited',
@@ -76,7 +76,7 @@ export const searchRecipes = async (filters, pagination) => {
     distinct: true
   };
 
-  // Додаємо GROUP BY для сортування за популярністю
+  // Add GROUP BY for popularity sorting
   if (sort === 'popularity') {
     queryOptions.group = [
       'Recipe.id',
@@ -144,7 +144,7 @@ export const getPopularRecipes = async (pagination) => {
   const { page = 1, limit = 12 } = pagination;
   const offset = (page - 1) * limit;
 
-  // Використовуємо прямий SQL запит для отримання популярних рецептів
+  // Use direct SQL query to get popular recipes
   const results = await sequelize.query(`
     SELECT r.*, COUNT(f.id) as favorites_count
     FROM recipes r
@@ -157,10 +157,10 @@ export const getPopularRecipes = async (pagination) => {
     type: sequelize.QueryTypes.SELECT
   });
 
-  // Отримуємо загальну кількість рецептів
+  // Get total count of recipes
   const totalCount = await Recipe.count();
 
-  // Якщо немає результатів, повертаємо порожній масив
+  // If no results, return empty array
   if (!results || results.length === 0) {
     return {
       recipes: [],
@@ -173,7 +173,7 @@ export const getPopularRecipes = async (pagination) => {
     };
   }
 
-  // Отримуємо повну інформацію про рецепти з релейшенами
+  // Get full recipe information with relations
   const recipeIds = results.map(r => r.id);
   const recipes = await Recipe.findAll({
     where: { id: recipeIds },
@@ -228,7 +228,7 @@ export const createRecipe = async (recipeData, userId) => {
     areaId
   });
 
-  // Додаємо інгредієнти через junction table
+  // Add ingredients through junction table
   if (ingredients && ingredients.length > 0) {
     const recipeIngredients = ingredients.map(ingredient => ({
       recipeId: recipe.id,
@@ -239,7 +239,7 @@ export const createRecipe = async (recipeData, userId) => {
     await RecipeIngredient.bulkCreate(recipeIngredients);
   }
 
-  // Повертаємо рецепт з усіма релейшенами
+  // Return recipe with all relations
   return await getRecipeById(recipe.id);
 };
 
@@ -266,14 +266,14 @@ export const updateRecipe = async (id, recipeData, userId) => {
     areaId
   });
 
-  // Оновлюємо інгредієнти
+  // Update ingredients
   if (ingredients) {
-    // Видаляємо старі інгредієнти
+    // Remove old ingredients
     await RecipeIngredient.destroy({
       where: { recipeId: id }
     });
     
-    // Додаємо нові
+    // Add new ones
     if (ingredients.length > 0) {
       const recipeIngredients = ingredients.map(ingredient => ({
         recipeId: id,
@@ -299,12 +299,12 @@ export const deleteRecipe = async (id, userId) => {
     throw new Error('Not authorized to delete this recipe');
   }
 
-  // Видаляємо пов'язані інгредієнти
+  // Remove related ingredients
   await RecipeIngredient.destroy({
     where: { recipeId: id }
   });
 
-  // Видаляємо рецепт
+  // Delete recipe
   await recipe.destroy();
 
   return { message: 'Recipe deleted successfully' };
@@ -317,7 +317,7 @@ export const addToFavorites = async (recipeId, userId) => {
     throw new Error('Recipe not found');
   }
 
-  // Перевіряємо, чи вже в улюблених
+  // Check if already in favorites
   const existingFavorite = await Favorite.findOne({
     where: { userId, recipeId }
   });
