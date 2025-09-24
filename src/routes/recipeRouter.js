@@ -17,12 +17,10 @@ router.get('/popular', validateBody(getPopularRecipesSchema), recipeController.g
 router.get('/:id', recipeController.getRecipeById);
 
 // Private endpoints (authentication is required)
-router.use(authenticate);
-
-router.post('/', validateBody(createRecipeSchema), recipeController.createRecipe);
-router.patch('/:id', validateBody(updateRecipeSchema), recipeController.updateRecipe);
-router.delete('/:id', recipeController.deleteRecipe);
-router.post('/:id/favorite', recipeController.addToFavorites);
-router.delete('/:id/favorite', recipeController.removeFromFavorites);
+router.post('/', authenticate, validateBody(createRecipeSchema), recipeController.createRecipe);
+router.patch('/:id', authenticate, validateBody(updateRecipeSchema), recipeController.updateRecipe);
+router.delete('/:id', authenticate, recipeController.deleteRecipe);
+router.post('/:id/favorite', authenticate, recipeController.addToFavorites);
+router.delete('/:id/favorite', authenticate, recipeController.removeFromFavorites);
 
 export default router;
