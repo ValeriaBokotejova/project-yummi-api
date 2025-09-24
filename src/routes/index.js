@@ -1,5 +1,9 @@
 import express from 'express';
 import authRouter from './authRouter.js';
+import categoriesRouter from './categoriesRouter.js';
+import areasRouter from './areasRouter.js';
+import ingredientsRouter from './ingredientsRouter.js';
+import testimonialsRouter from './testimonialsRouter.js';
 
 const router = express.Router();
 
@@ -13,5 +17,13 @@ router.get('/health', (req, res) => {
 });
 
 router.use('/auth', authRouter);
+
+router.use('/categories', categoriesRouter);
+
+router.use('/areas', areasRouter);
+
+router.use('/ingredients', ingredientsRouter);
+
+router.use('/testimonials', testimonialsRouter);
 
 export default router;
