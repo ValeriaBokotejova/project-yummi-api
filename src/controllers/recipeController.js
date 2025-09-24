@@ -5,9 +5,10 @@ import * as recipeService from '../services/recipeService.js';
 export const searchRecipes = async (req, res, next) => {
   try {
     const { category, ingredient, area, page, limit, sort } = req.query;
-    const filters = { category, ingredient, area, page, limit, sort };
+    const filters = { category, ingredient, area, sort };
+    const pagination = { page, limit };
 
-    const result = await recipeService.searchRecipes(filters, { page, limit });
+    const result = await recipeService.searchRecipes(filters, pagination);
 
     res.status(200).json({
       success: true,
