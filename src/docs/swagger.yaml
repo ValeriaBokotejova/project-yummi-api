@@ -81,3 +81,122 @@ paths:
                     type: string
         '401':
           description: Unauthorized
+
+
+  /categories:
+    get:
+      summary: Get all categories
+      tags: [Categories]
+      responses:
+        '201':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+  /areas:
+    get:
+      summary: Get all areas
+      tags: [Areas]
+      responses:
+        '201':
+          description: List of areas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Area'
+
+  /ingredients:
+    get:
+      summary: Get all ingredients
+      tags: [Ingredients]
+      responses:
+        '201':
+          description: List of ingredients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ingredient'
+
+  /testimonials:
+    get:
+      summary: Get all testimonials
+      tags: [Testimonials]
+      responses:
+        '201':
+          description: List of testimonials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Testimonial'
+
+components:
+  schemas:
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 3d2c9d2a-5a10-4e0f-bc6a-1c2f3b4d5e6f
+        name:
+          type: string
+          example: Breakfast
+    Area:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d
+        name:
+          type: string
+          example: Italian
+    Ingredient:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 9f8e7d6c-5b4a-3210-fedc-ba9876543210
+        name:
+          type: string
+          example: Tomato
+        desc:
+          type: string
+          example: Fresh red tomato commonly used in salads and sauces.
+        imgUrl:
+          type: string
+          example: https://example.com/images/tomato.png
+    Testimonial:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 11112222-3333-4444-5555-666677778888
+        testimonial:
+          type: string
+          example: I love this app! Recipes are amazing.
+        ownerId:
+          type: string
+          format: uuid
+          nullable: true
+          example: ddeeccbb-aabb-ccdd-eeff-001122334455
+        createdAt:
+          type: string
+          format: date-time
+          example: 2025-09-24T18:30:00.000Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2025-09-24T18:30:00.000Z
