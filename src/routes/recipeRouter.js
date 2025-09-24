@@ -2,6 +2,7 @@ import express from 'express';
 import * as recipeController from '../controllers/recipeController.js';
 import authenticate from '../middlewares/authenticate.js';
 import validateBody from '../middlewares/validateBody.js';
+import validateQuery from '../middlewares/validateQuery.js';
 import {
   createRecipeSchema,
   updateRecipeSchema,
@@ -12,8 +13,8 @@ import {
 const router = express.Router();
 
 // Public endpoints
-router.get('/', validateBody(searchRecipesSchema), recipeController.searchRecipes);
-router.get('/popular', validateBody(getPopularRecipesSchema), recipeController.getPopularRecipes);
+router.get('/', validateQuery(searchRecipesSchema), recipeController.searchRecipes);
+router.get('/popular', validateQuery(getPopularRecipesSchema), recipeController.getPopularRecipes);
 router.get('/:id', recipeController.getRecipeById);
 
 // Private endpoints (authentication is required)
