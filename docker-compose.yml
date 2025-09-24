@@ -4,17 +4,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    command: ['./docker-entrypoint.sh', 'npm', 'run', 'dev']
     ports:
       - '${PORT}:${PORT}'
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     environment:
-      - DB_HOST=${DB_HOST:-postgres}
-      - DB_NAME=${DB_NAME:-yummi}
-      - DB_USER=${DB_USER:-pg_user}
-      - DB_PASS=${DB_PASS:-pg_password}
+      - DB_HOST=postgres
+      - DB_NAME=${DB_NAME:-yummi_db}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASS=${DB_PASS:-your_password}
       - DB_PORT=${DB_PORT:-5432}
       - PORT=${PORT:-3000}
     depends_on:
@@ -32,13 +31,13 @@ services:
     ports:
       - '${DB_PORT:-5432}:5432'
     environment:
-      - POSTGRES_USER=${DB_USER:-pg_user}
-      - POSTGRES_PASSWORD=${DB_PASS:-pg_password}
-      - POSTGRES_DB=${DB_NAME:-yummi}
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASS:-your_password}
+      - POSTGRES_DB=${DB_NAME:-yummi_db}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-user} -d ${DB_NAME:-yammi}']
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-yummi_db}']
       interval: 5s
       timeout: 5s
       retries: 5

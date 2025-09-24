@@ -4,6 +4,9 @@
   "description": "",
   "type": "module",
   "scripts": {
+    "migrate-and-seed": "npx sequelize-cli db:migrate && node scripts/seed-if-empty.js",
+    "predev": "npm run migrate-and-seed",
+    "prestart": "npm run migrate-and-seed",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "lint": "eslint .",

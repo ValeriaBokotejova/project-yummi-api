@@ -10,5 +10,4 @@ COPY . .
 # Expose port (optional, only for documentation, docker-compose handles mapping)
 EXPOSE 3000
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["npm", "run", "dev"]
