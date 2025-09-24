@@ -1,12 +1,112 @@
 import { Recipe, User, Category, Area, Ingredient, RecipeIngredient, Favorite } from '../db/models/index.js';
 import { Op } from 'sequelize';
 import sequelize from '../db/connection.js';
-import { getRecipeIncludes, getRecipeIncludesWithIngredientFilter } from '../utils/recipeIncludes.js';
-import { 
-  buildPopularRecipesWhereConditions, 
-  executePopularRecipesQuery, 
-  getPopularRecipesTotalCount 
-} from '../utils/popularRecipesQuery.js';
+import { NotFoundError, UnauthorizedError, DuplicateError } from '../errors/DomainErrors.js';
+
+// Private helper functions for popular recipes queries
+const buildPopularRecipesWhereConditions = (filters) => {
+  const { category, area, ingredient } = filters;
+  const whereConditions = [];
+  const replacements = {};
+
+  if (category) {
+    whereConditions.push('r."categoryId" = :category');
+    replacements.category = category;
+  }
+
+  if (area) {
+    whereConditions.push('r."areaId" = :area');
+    replacements.area = area;
+  }
+
+  if (ingredient) {
+    whereConditions.push(
+      'EXISTS (SELECT 1 FROM "recipe-ingredients" ri JOIN ingredients i ON ri."ingredientId" = i.id WHERE ri."recipeId" = r.id AND i.name ILIKE :ingredient)'
+    );
+    replacements.ingredient = `%${ingredient}%`;
+  }
+
+  return { whereConditions, replacements };
+};
+
+const executePopularRecipesQuery = async ({ limit, offset, whereConditions, replacements }) => {
+  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+  
+  const query = `
+    SELECT r.*, COUNT(f.id) as favorites_count
+    FROM recipes r
+    LEFT JOIN favorites f ON r.id = f."recipeId"
+    ${whereClause}
+    GROUP BY r.id
+    ORDER BY favorites_count DESC
+    LIMIT :limit OFFSET :offset
+  `;
+
+  return await sequelize.query(query, {
+    replacements: { ...replacements, limit, offset },
+    type: sequelize.QueryTypes.SELECT
+  });
+};
+
+const getPopularRecipesTotalCount = async (whereConditions, replacements) => {
+  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+  
+  const countQuery = `SELECT COUNT(*) as total FROM recipes r ${whereClause}`;
+  
+  const countResult = await sequelize.query(countQuery, {
+    replacements: Object.fromEntries(
+      Object.entries(replacements).filter(([key]) => key !== 'limit' && key !== 'offset')
+    ),
+    type: sequelize.QueryTypes.SELECT
+  });
+  
+  return parseInt(countResult[0].total);
+};
+
+// Private helper functions for recipe includes
+const getRecipeIncludes = () => [
+  {
+    model: User,
+    as: 'owner',
+    attributes: ['id', 'name', 'avatarUrl']
+  },
+  {
+    model: Category,
+    as: 'category',
+    attributes: ['id', 'name']
+  },
+  {
+    model: Area,
+    as: 'area',
+    attributes: ['id', 'name']
+  },
+  {
+    model: Ingredient,
+    through: {
+      attributes: ['measure']
+    },
+    attributes: ['id', 'name']
+  }
+];
+
+const getRecipeIncludesWithIngredientFilter = (ingredient) => {
+  const includes = getRecipeIncludes();
+  
+  if (ingredient) {
+    const ingredientInclude = includes.find(include => include.model === Ingredient);
+    if (ingredientInclude) {
+      Object.assign(ingredientInclude, {
+        where: {
+          name: {
+            [Op.iLike]: `%${ingredient}%`
+          }
+        }
+      });
+    }
+  }
+  
+  return includes;
+};
 
 export const searchRecipes = async (filters, pagination) => {
   const { page = 1, limit = 12 } = pagination;
@@ -94,7 +194,7 @@ export const getRecipeById = async (id) => {
   });
 
   if (!recipe) {
-    throw new Error('Recipe not found');
+    throw new NotFoundError('Recipe');
   }
 
   return recipe;
@@ -163,11 +263,11 @@ export const updateRecipe = async (id, recipeData, userId) => {
   const recipe = await Recipe.findByPk(id);
   
   if (!recipe) {
-    throw new Error('Recipe not found');
+    throw new NotFoundError('Recipe');
   }
   
   if (recipe.ownerId !== userId) {
-    throw new Error('Not authorized to update this recipe');
+    throw new UnauthorizedError('Not authorized to update this recipe');
   }
 
   const { ingredients, ...recipeFields } = recipeData;
@@ -200,11 +300,11 @@ export const deleteRecipe = async (id, userId) => {
   const recipe = await Recipe.findByPk(id);
   
   if (!recipe) {
-    throw new Error('Recipe not found');
+    throw new NotFoundError('Recipe');
   }
   
   if (recipe.ownerId !== userId) {
-    throw new Error('Not authorized to delete this recipe');
+    throw new UnauthorizedError('Not authorized to delete this recipe');
   }
 
   // Remove related ingredients
@@ -222,7 +322,7 @@ export const addToFavorites = async (recipeId, userId) => {
   const recipe = await Recipe.findByPk(recipeId);
   
   if (!recipe) {
-    throw new Error('Recipe not found');
+    throw new NotFoundError('Recipe');
   }
 
   // Check if already in favorites
@@ -231,7 +331,7 @@ export const addToFavorites = async (recipeId, userId) => {
   });
 
   if (existingFavorite) {
-    throw new Error('Recipe already in favorites');
+    throw new DuplicateError('Recipe already in favorites');
   }
 
   await Favorite.create({ userId, recipeId });
@@ -245,7 +345,7 @@ export const removeFromFavorites = async (recipeId, userId) => {
   });
 
   if (!favorite) {
-    throw new Error('Recipe not in favorites');
+    throw new NotFoundError('Recipe not in favorites');
   }
 
   await favorite.destroy();
