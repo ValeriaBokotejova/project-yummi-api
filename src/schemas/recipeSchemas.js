@@ -38,7 +38,8 @@ export const searchRecipesSchema = Joi.object({
   area: Joi.string().uuid().optional(),
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(50).default(12),
-  sort: Joi.string().valid('popularity', 'title', 'createdAt').default('createdAt'),
+  sortBy: Joi.string().valid('popularity', 'title', 'createdAt', 'time').default('createdAt'),
+  sortDir: Joi.string().valid('asc', 'desc').default('desc'),
 });
 
 export const getPopularRecipesSchema = Joi.object({

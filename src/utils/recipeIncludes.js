@@ -30,11 +30,16 @@ export const getRecipeIncludesWithIngredientFilter = (ingredient) => {
   const includes = getRecipeIncludes();
   
   if (ingredient) {
-    includes[3].where = {
-      name: {
-        [Op.iLike]: `%${ingredient}%`
-      }
-    };
+    const ingredientInclude = includes.find(include => include.model === Ingredient);
+    if (ingredientInclude) {
+      Object.assign(ingredientInclude, {
+        where: {
+          name: {
+            [Op.iLike]: `%${ingredient}%`
+          }
+        }
+      });
+    }
   }
   
   return includes;

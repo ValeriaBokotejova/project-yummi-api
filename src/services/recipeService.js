@@ -10,7 +10,7 @@ import {
 
 export const searchRecipes = async (filters, pagination) => {
   const { page = 1, limit = 12 } = pagination;
-  const { category, ingredient, area, sort = 'createdAt' } = filters;
+  const { category, ingredient, area, sortBy = 'createdAt', sortDir = 'desc' } = filters;
   
   const whereClause = {};
   const includeClause = getRecipeIncludesWithIngredientFilter(ingredient);
@@ -27,7 +27,7 @@ export const searchRecipes = async (filters, pagination) => {
   const offset = (page - 1) * limit;
   
   // Handle popularity sorting with direct SQL query
-  if (sort === 'popularity') {
+  if (sortBy === 'popularity') {
     const { whereConditions, replacements } = buildPopularRecipesWhereConditions({ category, area, ingredient });
     
     const results = await executePopularRecipesQuery({ limit, offset, whereConditions, replacements });
@@ -56,10 +56,19 @@ export const searchRecipes = async (filters, pagination) => {
 
   // Handle other sorting options with regular Sequelize query
   const orderClause = [];
-  if (sort === 'title') {
-    orderClause.push(['title', 'ASC']);
-  } else {
-    orderClause.push(['createdAt', 'DESC']);
+  const direction = sortDir.toUpperCase();
+  
+  switch (sortBy) {
+    case 'title':
+      orderClause.push(['title', direction]);
+      break;
+    case 'time':
+      orderClause.push(['time', direction]);
+      break;
+    case 'createdAt':
+    default:
+      orderClause.push(['createdAt', direction]);
+      break;
   }
 
   const queryOptions = {
