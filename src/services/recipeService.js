@@ -1,36 +1,19 @@
 import { Recipe, User, Category, Area, Ingredient, RecipeIngredient, Favorite } from '../db/models/index.js';
 import { Op } from 'sequelize';
 import sequelize from '../db/connection.js';
+import { getRecipeIncludes, getRecipeIncludesWithIngredientFilter } from '../utils/recipeIncludes.js';
+import { 
+  buildPopularRecipesWhereConditions, 
+  executePopularRecipesQuery, 
+  getPopularRecipesTotalCount 
+} from '../utils/popularRecipesQuery.js';
 
 export const searchRecipes = async (filters, pagination) => {
   const { page = 1, limit = 12 } = pagination;
   const { category, ingredient, area, sort = 'createdAt' } = filters;
   
   const whereClause = {};
-  const includeClause = [
-    {
-      model: User,
-      as: 'owner',
-      attributes: ['id', 'name', 'avatarUrl']
-    },
-    {
-      model: Category,
-      as: 'category',
-      attributes: ['id', 'name']
-    },
-    {
-      model: Area,
-      as: 'area',
-      attributes: ['id', 'name']
-    },
-    {
-      model: Ingredient,
-      through: {
-        attributes: ['measure']
-      },
-      attributes: ['id', 'name']
-    }
-  ];
+  const includeClause = getRecipeIncludesWithIngredientFilter(ingredient);
 
   // Add filters
   if (category) {
@@ -40,66 +23,15 @@ export const searchRecipes = async (filters, pagination) => {
   if (area) {
     whereClause.areaId = area;
   }
-  
-  if (ingredient) {
-    includeClause[3].where = {
-      name: {
-        [Op.iLike]: `%${ingredient}%`
-      }
-    };
-  }
 
   const offset = (page - 1) * limit;
   
-  // Handle popularity sorting with direct SQL query (like in getPopularRecipes)
+  // Handle popularity sorting with direct SQL query
   if (sort === 'popularity') {
-    // Build WHERE conditions for SQL query
-    let whereConditions = [];
-    let replacements = { limit, offset };
+    const { whereConditions, replacements } = buildPopularRecipesWhereConditions({ category, area, ingredient });
     
-    if (category) {
-      whereConditions.push('r."categoryId" = :category');
-      replacements.category = category;
-    }
-    
-    if (area) {
-      whereConditions.push('r."areaId" = :area');
-      replacements.area = area;
-    }
-    
-    if (ingredient) {
-      whereConditions.push('EXISTS (SELECT 1 FROM "recipe-ingredients" ri JOIN ingredients i ON ri."ingredientId" = i.id WHERE ri."recipeId" = r.id AND i.name ILIKE :ingredient)');
-      replacements.ingredient = `%${ingredient}%`;
-    }
-    
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
-    
-    // Use direct SQL query to get popular recipes with filters
-    const results = await sequelize.query(`
-      SELECT r.*, COUNT(f.id) as favorites_count
-      FROM recipes r
-      LEFT JOIN favorites f ON r.id = f."recipeId"
-      ${whereClause}
-      GROUP BY r.id
-      ORDER BY favorites_count DESC
-      LIMIT :limit OFFSET :offset
-    `, {
-      replacements,
-      type: sequelize.QueryTypes.SELECT
-    });
-
-    // Get total count with same filters
-    let countQuery = 'SELECT COUNT(*) as total FROM recipes r';
-    if (whereConditions.length > 0) {
-      countQuery += ` ${whereClause}`;
-    }
-    
-    const countResult = await sequelize.query(countQuery, {
-      replacements: Object.fromEntries(Object.entries(replacements).filter(([key]) => key !== 'limit' && key !== 'offset')),
-      type: sequelize.QueryTypes.SELECT
-    });
-    
-    const totalCount = parseInt(countResult[0].total);
+    const results = await executePopularRecipesQuery({ limit, offset, whereConditions, replacements });
+    const totalCount = await getPopularRecipesTotalCount(whereConditions, replacements);
 
     // If no results, return empty array
     if (!results || results.length === 0) {
@@ -149,30 +81,7 @@ export const searchRecipes = async (filters, pagination) => {
 
 export const getRecipeById = async (id) => {
   const recipe = await Recipe.findByPk(id, {
-    include: [
-      {
-        model: User,
-        as: 'owner',
-        attributes: ['id', 'name', 'avatarUrl']
-      },
-      {
-        model: Category,
-        as: 'category',
-        attributes: ['id', 'name']
-      },
-      {
-        model: Area,
-        as: 'area',
-        attributes: ['id', 'name']
-      },
-      {
-        model: Ingredient,
-        through: {
-          attributes: ['measure']
-        },
-        attributes: ['id', 'name']
-      }
-    ]
+    include: getRecipeIncludes()
   });
 
   if (!recipe) {
@@ -187,16 +96,11 @@ export const getPopularRecipes = async (pagination) => {
   const offset = (page - 1) * limit;
 
   // Use direct SQL query to get popular recipes
-  const results = await sequelize.query(`
-    SELECT r.*, COUNT(f.id) as favorites_count
-    FROM recipes r
-    LEFT JOIN favorites f ON r.id = f."recipeId"
-    GROUP BY r.id
-    ORDER BY favorites_count DESC
-    LIMIT :limit OFFSET :offset
-  `, {
-    replacements: { limit, offset },
-    type: sequelize.QueryTypes.SELECT
+  const results = await executePopularRecipesQuery({ 
+    limit, 
+    offset, 
+    whereConditions: [], 
+    replacements: {} 
   });
 
   // Get total count of recipes
@@ -214,30 +118,7 @@ export const getPopularRecipes = async (pagination) => {
   const recipeIds = results.map(r => r.id);
   const recipes = await Recipe.findAll({
     where: { id: recipeIds },
-    include: [
-      {
-        model: User,
-        as: 'owner',
-        attributes: ['id', 'name', 'avatarUrl']
-      },
-      {
-        model: Category,
-        as: 'category',
-        attributes: ['id', 'name']
-      },
-      {
-        model: Area,
-        as: 'area',
-        attributes: ['id', 'name']
-      },
-      {
-        model: Ingredient,
-        through: {
-          attributes: ['measure']
-        },
-        attributes: ['id', 'name']
-      }
-    ]
+    include: getRecipeIncludes()
   });
 
   return {
