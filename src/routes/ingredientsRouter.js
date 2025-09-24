@@ -3,6 +3,6 @@ import { getAllIngredients } from '../controllers/ingredientsController.js';
 
 const ingredientsRouter = express.Router();
 
-ingredientsRouter.get("/", getAllIngredients);
+ingredientsRouter.get("", getAllIngredients);
 
 export default ingredientsRouter;

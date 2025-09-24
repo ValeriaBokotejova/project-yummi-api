@@ -13,6 +13,14 @@ const Testimonial = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    ownerId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+    },
   },
   { tableName: 'testimonials', timestamps: true }
 );
