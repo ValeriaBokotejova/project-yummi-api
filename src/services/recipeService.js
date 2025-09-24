@@ -272,17 +272,11 @@ export const getPopularRecipes = async (pagination) => {
 };
 
 export const createRecipe = async (recipeData, userId) => {
-  const { title, description, instructions, thumbUrl, time, categoryId, areaId, ingredients } = recipeData;
+  const { ingredients, ...recipeFields } = recipeData;
 
   const recipe = await Recipe.create({
-    title,
-    description,
-    instructions,
-    thumbUrl,
-    time,
+    ...recipeFields,
     ownerId: userId,
-    categoryId,
-    areaId
   });
 
   // Add ingredients through junction table
@@ -311,17 +305,9 @@ export const updateRecipe = async (id, recipeData, userId) => {
     throw new Error('Not authorized to update this recipe');
   }
 
-  const { title, description, instructions, thumbUrl, time, categoryId, areaId, ingredients } = recipeData;
+  const { ingredients, ...recipeFields } = recipeData;
 
-  await recipe.update({
-    title,
-    description,
-    instructions,
-    thumbUrl,
-    time,
-    categoryId,
-    areaId
-  });
+  await recipe.update(recipeFields);
 
   // Update ingredients
   if (ingredients) {
