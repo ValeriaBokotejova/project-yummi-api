@@ -9,6 +9,14 @@ const Favorite = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
+    userId: { 
+      type: DataTypes.STRING, 
+      allowNull: false 
+    },
+    recipeId: { 
+      type: DataTypes.STRING, 
+      allowNull: false 
+    },
   },
   { tableName: 'favorites', timestamps: false }
 );
