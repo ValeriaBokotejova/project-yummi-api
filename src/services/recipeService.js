@@ -104,13 +104,8 @@ export const searchRecipes = async (filters, pagination) => {
     // If no results, return empty array
     if (!results || results.length === 0) {
       return {
-        recipes: [],
-        pagination: {
-          page,
-          limit,
-          total: totalCount,
-          pages: Math.ceil(totalCount / limit)
-        }
+        items: [],
+        totalCount: totalCount
       };
     }
 
@@ -122,13 +117,8 @@ export const searchRecipes = async (filters, pagination) => {
     });
 
     return {
-      recipes,
-      pagination: {
-        page,
-        limit,
-        total: totalCount,
-        pages: Math.ceil(totalCount / limit)
-      }
+      items: recipes,
+      totalCount: totalCount
     };
   }
 
@@ -152,13 +142,8 @@ export const searchRecipes = async (filters, pagination) => {
   const { count, rows: recipes } = await Recipe.findAndCountAll(queryOptions);
 
   return {
-    recipes,
-    pagination: {
-      page,
-      limit,
-      total: count,
-      pages: Math.ceil(count / limit)
-    }
+    items: recipes,
+    totalCount: count
   };
 };
 
@@ -220,13 +205,8 @@ export const getPopularRecipes = async (pagination) => {
   // If no results, return empty array
   if (!results || results.length === 0) {
     return {
-      recipes: [],
-      pagination: {
-        page,
-        limit,
-        total: totalCount,
-        pages: Math.ceil(totalCount / limit)
-      }
+      items: [],
+      totalCount: totalCount
     };
   }
 
@@ -261,13 +241,8 @@ export const getPopularRecipes = async (pagination) => {
   });
 
   return {
-    recipes,
-    pagination: {
-      page,
-      limit,
-      total: totalCount,
-      pages: Math.ceil(totalCount / limit)
-    }
+    items: recipes,
+    totalCount: totalCount
   };
 };
 
