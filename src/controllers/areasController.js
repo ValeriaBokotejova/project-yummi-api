@@ -1,4 +1,4 @@
-import { getAreaByName, listOfAreas } from '../services/areasService.js';
+import { listOfAreas } from '../services/areasService.js';
 
 
 export const getAllAreas = async (req, res, next) => {
@@ -10,11 +10,3 @@ export const getAllAreas = async (req, res, next) => {
   }
 };
 
-export const getOneAreaByName = async (req, res, next) => {
-  try {
-    const areas = await getAreaByName()
-    return res.status(201).json(areas);
-  } catch (error) {
-    next(error);
-  }
-};
