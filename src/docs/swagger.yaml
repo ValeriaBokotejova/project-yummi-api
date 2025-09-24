@@ -81,3 +81,433 @@ paths:
                     type: string
         '401':
           description: Unauthorized
+
+  /recipes:
+    get:
+      summary: Пошук і фільтрація рецептів
+      description: Публічний ендпоінт для пошуку рецептів за категорією, інгредієнтом та регіоном з пагінацією та сортуванням
+      tags: [Recipes]
+      parameters:
+        - name: category
+          in: query
+          description: Категорія рецепту
+          schema:
+            type: string
+            example: Dessert
+        - name: ingredient
+          in: query
+          description: ID інгредієнта
+          schema:
+            type: string
+            example: 640c2dd963a319ea671e367e
+        - name: area
+          in: query
+          description: Регіон походження
+          schema:
+            type: string
+            example: British
+        - name: page
+          in: query
+          description: Номер сторінки
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Кількість рецептів на сторінці
+          schema:
+            type: integer
+            default: 12
+        - name: sort
+          in: query
+          description: Сортування
+          schema:
+            type: string
+            enum: [popularity, title, createdAt]
+            default: createdAt
+      responses:
+        '200':
+          description: Список рецептів
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      recipes:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Recipe'
+                      totalCount:
+                        type: integer
+                      totalPages:
+                        type: integer
+                      currentPage:
+                        type: integer
+                      limit:
+                        type: integer
+
+    post:
+      summary: Створити рецепт
+      description: Приватний ендпоінт для створення власного рецепту
+      tags: [Recipes]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRecipeRequest'
+      responses:
+        '201':
+          description: Рецепт створено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Recipe'
+
+  /recipes/popular:
+    get:
+      summary: Популярні рецепти
+      description: Публічний ендпоінт для отримання популярних рецептів
+      tags: [Recipes]
+      parameters:
+        - name: page
+          in: query
+          description: Номер сторінки
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Кількість рецептів на сторінці
+          schema:
+            type: integer
+            default: 12
+      responses:
+        '200':
+          description: Список популярних рецептів
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      recipes:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Recipe'
+                      totalCount:
+                        type: integer
+                      totalPages:
+                        type: integer
+                      currentPage:
+                        type: integer
+                      limit:
+                        type: integer
+
+  /recipes/{id}:
+    get:
+      summary: Отримати рецепт за ID
+      description: Публічний ендпоінт для отримання детальної інформації про рецепт
+      tags: [Recipes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID рецепту
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детальна інформація про рецепт
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Recipe'
+        '404':
+          description: Рецепт не знайдено
+
+    patch:
+      summary: Оновити рецепт
+      description: Приватний ендпоінт для оновлення власного рецепту
+      tags: [Recipes]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID рецепту
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRecipeRequest'
+      responses:
+        '200':
+          description: Рецепт оновлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Recipe'
+        '403':
+          description: Доступ заборонено
+        '404':
+          description: Рецепт не знайдено
+
+    delete:
+      summary: Видалити рецепт
+      description: Приватний ендпоінт для видалення власного рецепту
+      tags: [Recipes]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID рецепту
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Рецепт видалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '403':
+          description: Доступ заборонено
+        '404':
+          description: Рецепт не знайдено
+
+  /recipes/{id}/favorite:
+    post:
+      summary: Додати до улюблених
+      description: Приватний ендпоінт для додавання рецепту до списку улюблених
+      tags: [Recipes]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID рецепту
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Рецепт додано до улюблених
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '400':
+          description: Рецепт вже в улюблених
+        '404':
+          description: Рецепт не знайдено
+
+    delete:
+      summary: Видалити з улюблених
+      description: Приватний ендпоінт для видалення рецепту зі списку улюблених
+      tags: [Recipes]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID рецепту
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Рецепт видалено з улюблених
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+        '404':
+          description: Рецепт не знайдено в улюблених
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Recipe:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        instructions:
+          type: string
+        thumb:
+          type: string
+        time:
+          type: string
+        category:
+          type: string
+        area:
+          type: string
+        owner:
+          type: string
+          format: uuid
+        ingredients:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              measure:
+                type: string
+        popularity:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateRecipeRequest:
+      type: object
+      required:
+        - title
+        - instructions
+        - category
+        - ingredients
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        instructions:
+          type: string
+          minLength: 1
+        thumb:
+          type: string
+          format: uri
+        time:
+          type: string
+        category:
+          type: string
+        area:
+          type: string
+        ingredients:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - id
+              - measure
+            properties:
+              id:
+                type: string
+              measure:
+                type: string
+
+    UpdateRecipeRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        instructions:
+          type: string
+          minLength: 1
+        thumb:
+          type: string
+          format: uri
+        time:
+          type: string
+        category:
+          type: string
+        area:
+          type: string
+        ingredients:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - id
+              - measure
+            properties:
+              id:
+                type: string
+              measure:
+                type: string
