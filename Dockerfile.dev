@@ -5,6 +5,9 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
 
+COPY docker-entrypoint.sh ./
+RUN chmod +x ./docker-entrypoint.sh
+
 COPY . .
 
 # Expose port (optional, only for documentation, docker-compose handles mapping)
