@@ -1,4 +1,6 @@
 import { Testimonial } from '../db/models/index.js';
 
-export const listOfTestimonials = () => Testimonial.findAll();
+export const listOfTestimonials = async () => {
+  return await Testimonial.findAll();
+};
 

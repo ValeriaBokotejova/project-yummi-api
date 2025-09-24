@@ -1,4 +1,5 @@
 import { Area } from '../db/models/index.js';
 
-export const listOfAreas = () =>Area.findAll();
+export const listOfAreas = async () => {
+  return await Area.findAll()};
 

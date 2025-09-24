@@ -1,4 +1,6 @@
 import { Ingredient } from '../db/models/index.js';
 
-export const listOfIngredients = () =>Ingredient.findAll();
+export const listOfIngredients = async () => {
+  return await Ingredient.findAll();
+};
 
