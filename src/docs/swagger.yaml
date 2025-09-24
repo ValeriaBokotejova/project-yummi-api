@@ -1,21 +1,21 @@
 openapi: 3.0.0
 info:
-  title: Example API
-  description: REST API документація для вашого Node.js + Express проєкту
+  title: Yummi API
+  description: REST API documentation for a recipe sharing platform built with Node.js, Express, and PostgreSQL
   version: 1.0.0
 
 servers:
   - url: http://localhost:3000/api
-    description: Local server
+    description: Local development server
 
 paths:
   /health:
     get:
       summary: Health check
-      description: Перевіряє, чи працює сервер
+      description: Check if the server is running
       responses:
         '200':
-          description: OK
+          description: Server is healthy
           content:
             application/json:
               schema:
@@ -23,55 +23,76 @@ paths:
                 properties:
                   status:
                     type: string
-                  message:
+                    example: OK
+                  timestamp:
                     type: string
+                    format: date-time
+                  uptime:
+                    type: number
 
   /auth/register:
     post:
-      summary: Реєстрація користувача
-      tags: [Auth]
+      summary: Register user
+      description: Create a new user account
+      tags: [Authentication]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - name
+                - email
+                - password
               properties:
-                username:
+                name:
                   type: string
-                  example: username
+                  example: John Doe
                 email:
                   type: string
+                  format: email
                   example: user@example.com
                 password:
                   type: string
-                  example: secret123
+                  example: SecurePassword123
       responses:
         '201':
-          description: User created
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
         '400':
           description: Validation error
+        '409':
+          description: User already exists
 
   /auth/login:
     post:
-      summary: Логін користувача
-      tags: [Auth]
+      summary: Login user
+      description: Authenticate user and return JWT token
+      tags: [Authentication]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - email
+                - password
               properties:
                 email:
                   type: string
+                  format: email
                   example: user@example.com
                 password:
                   type: string
-                  example: secret123
+                  example: SecurePassword123
       responses:
         '200':
-          description: Success
+          description: Login successful
           content:
             application/json:
               schema:
@@ -79,81 +100,158 @@ paths:
                 properties:
                   token:
                     type: string
+                  user:
+                    $ref: '#/components/schemas/User'
         '401':
-          description: Unauthorized
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      summary: Logout user
+      description: Logout authenticated user
+      tags: [Authentication]
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Logout successful
+        '401':
+          description: Not authenticated
+
+  /categories:
+    get:
+      summary: Get all categories
+      description: Get list of all recipe categories
+      tags: [Categories]
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+  /areas:
+    get:
+      summary: Get all areas
+      description: Get list of all cuisine areas/regions
+      tags: [Areas]
+      responses:
+        '200':
+          description: List of areas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Area'
+
+  /ingredients:
+    get:
+      summary: Get all ingredients
+      description: Get list of all available ingredients
+      tags: [Ingredients]
+      responses:
+        '200':
+          description: List of ingredients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ingredient'
+
+  /testimonials:
+    get:
+      summary: Get all testimonials
+      description: Get list of all user testimonials
+      tags: [Testimonials]
+      responses:
+        '200':
+          description: List of testimonials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Testimonial'
 
   /recipes:
     get:
-      summary: Пошук і фільтрація рецептів
-      description: Публічний ендпоінт для пошуку рецептів за категорією, інгредієнтом та регіоном з пагінацією та сортуванням
+      summary: Search and filter recipes
+      description: Public endpoint for searching recipes by category, ingredient, and area with pagination and sorting
       tags: [Recipes]
       parameters:
         - name: category
           in: query
-          description: Категорія рецепту
+          description: Category UUID to filter by
           schema:
             type: string
-            example: Dessert
+            format: uuid
+            example: 3d2c9d2a-5a10-4e0f-bc6a-1c2f3b4d5e6f
         - name: ingredient
           in: query
-          description: ID інгредієнта
+          description: Ingredient name to search for (partial match)
           schema:
             type: string
-            example: 640c2dd963a319ea671e367e
+            example: tomato
         - name: area
           in: query
-          description: Регіон походження
+          description: Area UUID to filter by
           schema:
             type: string
-            example: British
+            format: uuid
+            example: 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d
         - name: page
           in: query
-          description: Номер сторінки
+          description: Page number
           schema:
             type: integer
             default: 1
+            minimum: 1
         - name: limit
           in: query
-          description: Кількість рецептів на сторінці
+          description: Number of recipes per page
           schema:
             type: integer
             default: 12
-        - name: sort
+            minimum: 1
+            maximum: 50
+        - name: sortBy
           in: query
-          description: Сортування
+          description: Field to sort by
           schema:
             type: string
-            enum: [popularity, title, createdAt]
+            enum: [popularity, title, createdAt, time]
             default: createdAt
+        - name: sortDir
+          in: query
+          description: Sort direction
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
       responses:
         '200':
-          description: Список рецептів
+          description: List of recipes with pagination info
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                  data:
-                    type: object
-                    properties:
-                      recipes:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Recipe'
-                      totalCount:
-                        type: integer
-                      totalPages:
-                        type: integer
-                      currentPage:
-                        type: integer
-                      limit:
-                        type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Recipe'
+                  totalCount:
+                    type: integer
+                    description: Total number of recipes matching the filters
 
     post:
-      summary: Створити рецепт
-      description: Приватний ендпоінт для створення власного рецепту
+      summary: Create recipe
+      description: Private endpoint for creating a new recipe
       tags: [Recipes]
       security:
         - bearerAuth: []
@@ -165,92 +263,79 @@ paths:
               $ref: '#/components/schemas/CreateRecipeRequest'
       responses:
         '201':
-          description: Рецепт створено
+          description: Recipe created successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  data:
-                    $ref: '#/components/schemas/Recipe'
+                $ref: '#/components/schemas/Recipe'
+        '400':
+          description: Validation error
+        '401':
+          description: Authentication required
 
   /recipes/popular:
     get:
-      summary: Популярні рецепти
-      description: Публічний ендпоінт для отримання популярних рецептів
+      summary: Get popular recipes
+      description: Public endpoint for getting popular recipes sorted by favorites count
       tags: [Recipes]
       parameters:
         - name: page
           in: query
-          description: Номер сторінки
+          description: Page number
           schema:
             type: integer
             default: 1
+            minimum: 1
         - name: limit
           in: query
-          description: Кількість рецептів на сторінці
+          description: Number of recipes per page
           schema:
             type: integer
             default: 12
+            minimum: 1
+            maximum: 50
       responses:
         '200':
-          description: Список популярних рецептів
+          description: List of popular recipes with pagination info
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                  data:
-                    type: object
-                    properties:
-                      recipes:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Recipe'
-                      totalCount:
-                        type: integer
-                      totalPages:
-                        type: integer
-                      currentPage:
-                        type: integer
-                      limit:
-                        type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Recipe'
+                  totalCount:
+                    type: integer
+                    description: Total number of popular recipes
 
   /recipes/{id}:
     get:
-      summary: Отримати рецепт за ID
-      description: Публічний ендпоінт для отримання детальної інформації про рецепт
+      summary: Get recipe by ID
+      description: Public endpoint for getting detailed recipe information
       tags: [Recipes]
       parameters:
         - name: id
           in: path
           required: true
-          description: ID рецепту
+          description: Recipe ID
           schema:
             type: string
             format: uuid
       responses:
         '200':
-          description: Детальна інформація про рецепт
+          description: Recipe details
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  data:
-                    $ref: '#/components/schemas/Recipe'
+                $ref: '#/components/schemas/Recipe'
         '404':
-          description: Рецепт не знайдено
+          description: Recipe not found
 
     patch:
-      summary: Оновити рецепт
-      description: Приватний ендпоінт для оновлення власного рецепту
+      summary: Update recipe
+      description: Private endpoint for updating own recipe
       tags: [Recipes]
       security:
         - bearerAuth: []
@@ -258,7 +343,7 @@ paths:
         - name: id
           in: path
           required: true
-          description: ID рецепту
+          description: Recipe ID
           schema:
             type: string
             format: uuid
@@ -270,24 +355,23 @@ paths:
               $ref: '#/components/schemas/UpdateRecipeRequest'
       responses:
         '200':
-          description: Рецепт оновлено
+          description: Recipe updated successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  data:
-                    $ref: '#/components/schemas/Recipe'
+                $ref: '#/components/schemas/Recipe'
+        '400':
+          description: Validation error
+        '401':
+          description: Authentication required
         '403':
-          description: Доступ заборонено
+          description: Access denied
         '404':
-          description: Рецепт не знайдено
+          description: Recipe not found
 
     delete:
-      summary: Видалити рецепт
-      description: Приватний ендпоінт для видалення власного рецепту
+      summary: Delete recipe
+      description: Private endpoint for deleting own recipe
       tags: [Recipes]
       security:
         - bearerAuth: []
@@ -295,34 +379,32 @@ paths:
         - name: id
           in: path
           required: true
-          description: ID рецепту
+          description: Recipe ID
           schema:
             type: string
             format: uuid
       responses:
         '200':
-          description: Рецепт видалено
+          description: Recipe deleted successfully
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                  data:
-                    type: object
-                    properties:
-                      message:
-                        type: string
+                  message:
+                    type: string
+                    example: Recipe deleted successfully
+        '401':
+          description: Authentication required
         '403':
-          description: Доступ заборонено
+          description: Access denied
         '404':
-          description: Рецепт не знайдено
+          description: Recipe not found
 
   /recipes/{id}/favorite:
     post:
-      summary: Додати до улюблених
-      description: Приватний ендпоінт для додавання рецепту до списку улюблених
+      summary: Add to favorites
+      description: Private endpoint for adding recipe to favorites
       tags: [Recipes]
       security:
         - bearerAuth: []
@@ -330,33 +412,31 @@ paths:
         - name: id
           in: path
           required: true
-          description: ID рецепту
+          description: Recipe ID
           schema:
             type: string
             format: uuid
       responses:
         '200':
-          description: Рецепт додано до улюблених
+          description: Recipe added to favorites
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                  data:
-                    type: object
-                    properties:
-                      message:
-                        type: string
+                  message:
+                    type: string
+                    example: Recipe added to favorites
         '400':
-          description: Рецепт вже в улюблених
+          description: Recipe already in favorites
+        '401':
+          description: Authentication required
         '404':
-          description: Рецепт не знайдено
+          description: Recipe not found
 
     delete:
-      summary: Видалити з улюблених
-      description: Приватний ендпоінт для видалення рецепту зі списку улюблених
+      summary: Remove from favorites
+      description: Private endpoint for removing recipe from favorites
       tags: [Recipes]
       security:
         - bearerAuth: []
@@ -364,27 +444,25 @@ paths:
         - name: id
           in: path
           required: true
-          description: ID рецепту
+          description: Recipe ID
           schema:
             type: string
             format: uuid
       responses:
         '200':
-          description: Рецепт видалено з улюблених
+          description: Recipe removed from favorites
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                  data:
-                    type: object
-                    properties:
-                      message:
-                        type: string
+                  message:
+                    type: string
+                    example: Recipe removed from favorites
+        '401':
+          description: Authentication required
         '404':
-          description: Рецепт не знайдено в улюблених
+          description: Recipe not found in favorites
 
 components:
   securitySchemes:
@@ -394,6 +472,107 @@ components:
       bearerFormat: JWT
 
   schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 3d2c9d2a-5a10-4e0f-bc6a-1c2f3b4d5e6f
+        name:
+          type: string
+          example: Dessert
+
+    Area:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d
+        name:
+          type: string
+          example: Italian
+
+    Ingredient:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 9f8e7d6c-5b4a-3210-fedc-ba9876543210
+        name:
+          type: string
+          example: Tomato
+        desc:
+          type: string
+          nullable: true
+          example: Fresh red tomato commonly used in salads and sauces
+        imgUrl:
+          type: string
+          nullable: true
+          example: https://example.com/images/tomato.png
+
+    Testimonial:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 11112222-3333-4444-5555-666677778888
+        testimonial:
+          type: string
+          example: I love this app! The recipes are amazing and easy to follow.
+        ownerId:
+          type: string
+          format: uuid
+          example: ddeeccbb-aabb-ccdd-eeff-001122334455
+        owner:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: ddeeccbb-aabb-ccdd-eeff-001122334455
+            name:
+              type: string
+              example: John Smith
+            avatarUrl:
+              type: string
+              format: uri
+              nullable: true
+              example: https://example.com/avatars/john.jpg
+        createdAt:
+          type: string
+          format: date-time
+          example: 2025-09-24T18:30:00.000Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2025-09-24T18:30:00.000Z
+
     Recipe:
       type: object
       properties:
@@ -402,21 +581,49 @@ components:
           format: uuid
         title:
           type: string
+          example: Chocolate Chip Cookies
         description:
           type: string
+          example: Delicious homemade chocolate chip cookies that are crispy on the outside and chewy on the inside
         instructions:
           type: string
-        thumb:
+          example: Preheat oven to 375°F. Mix flour, baking soda, and salt in a bowl...
+        thumbUrl:
           type: string
+          format: uri
+          example: https://example.com/images/recipe-thumb.jpg
         time:
-          type: string
-        category:
-          type: string
-        area:
-          type: string
-        owner:
+          type: integer
+          description: Cooking time in minutes
+          example: 25
+        ownerId:
           type: string
           format: uuid
+        categoryId:
+          type: string
+          format: uuid
+        areaId:
+          type: string
+          format: uuid
+          nullable: true
+        category:
+          $ref: '#/components/schemas/Category'
+        area:
+          allOf:
+            - $ref: '#/components/schemas/Area'
+            - nullable: true
+        owner:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            avatarUrl:
+              type: string
+              format: uri
+              nullable: true
         ingredients:
           type: array
           items:
@@ -424,10 +631,15 @@ components:
             properties:
               id:
                 type: string
-              measure:
+                format: uuid
+              name:
                 type: string
-        popularity:
-          type: integer
+              RecipeIngredient:
+                type: object
+                properties:
+                  measure:
+                    type: string
+                    example: 2 cups
         createdAt:
           type: string
           format: date-time
@@ -440,31 +652,42 @@ components:
       required:
         - title
         - instructions
-        - category
+        - thumbUrl
+        - time
+        - categoryId
         - ingredients
       properties:
         title:
           type: string
           minLength: 1
           maxLength: 200
+          example: Chocolate Chip Cookies
         description:
           type: string
           maxLength: 1000
+          example: Delicious homemade cookies
         instructions:
           type: string
           minLength: 1
-        thumb:
+          example: Preheat oven to 375°F. Mix ingredients...
+        thumbUrl:
           type: string
           format: uri
+          example: https://example.com/images/recipe.jpg
         time:
+          type: integer
+          minimum: 1
+          example: 25
+        categoryId:
           type: string
-        category:
+          format: uuid
+        areaId:
           type: string
-        area:
-          type: string
+          format: uuid
+          nullable: true
         ingredients:
           type: array
-          minItems: 1
+          minItems: 0
           items:
             type: object
             required:
@@ -473,8 +696,10 @@ components:
             properties:
               id:
                 type: string
+                format: uuid
               measure:
                 type: string
+                example: 2 cups
 
     UpdateRecipeRequest:
       type: object
@@ -489,18 +714,22 @@ components:
         instructions:
           type: string
           minLength: 1
-        thumb:
+        thumbUrl:
           type: string
           format: uri
         time:
+          type: integer
+          minimum: 1
+        categoryId:
           type: string
-        category:
+          format: uuid
+        areaId:
           type: string
-        area:
-          type: string
+          format: uuid
+          nullable: true
         ingredients:
           type: array
-          minItems: 1
+          minItems: 0
           items:
             type: object
             required:
@@ -509,5 +738,6 @@ components:
             properties:
               id:
                 type: string
+                format: uuid
               measure:
                 type: string
