@@ -13,7 +13,7 @@ export const createRecipeSchema = Joi.object({
       id: Joi.string().uuid().required(),
       measure: Joi.string().required(),
     })
-  ).min(1).required(),
+  ).min(0).required(),
 });
 
 export const updateRecipeSchema = Joi.object({
@@ -29,7 +29,7 @@ export const updateRecipeSchema = Joi.object({
       id: Joi.string().uuid().required(),
       measure: Joi.string().required(),
     })
-  ).min(1).optional(),
+  ).min(0).optional(),
 });
 
 export const searchRecipesSchema = Joi.object({

@@ -26,6 +26,11 @@ const errorHandler = (err, req, res, next) => {
     return next(HttpError(409, err.message));
   }
 
+  // Validation errors from Joi (HttpError with status 400)
+  if (err.status === 400) {
+    return next(HttpError(400, err.message));
+  }
+
   // Database errors
   if (err instanceof UniqueConstraintError) {
     const message = err.errors?.[0]?.message || 'Email already exist';
