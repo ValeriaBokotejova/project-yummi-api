@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    command: ['./docker-entrypoint.sh', 'npm', 'run', 'dev']
+    command: ['/usr/src/app/docker-entrypoint.sh', 'npm', 'run', 'dev']
     ports:
       - '${PORT}:${PORT}'
     volumes:
