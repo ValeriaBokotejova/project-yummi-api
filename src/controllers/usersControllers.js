@@ -1,4 +1,4 @@
-import { HttpError } from '../helpers/HttpError.js';
+import { HttpError } from '../utils/HttpError.js';
 import { uploadAvatar, getUserSatistics, getUserById } from '../services/usersService.js';
 
 export const getCurrentUserController = async (req, res, next) => {
@@ -51,11 +51,14 @@ export const getUserByIdController = async (req, res, next) => {
 };
 
 export const uploadAvatarController = async (req, res, next) => {
-  const { user, file } = req;
-  if (!user) {
-    return next(HttpError(401, 'Not authorized'));
-  }
   try {
+    const { user, file } = req;
+    if (!user) {
+      return next(HttpError(401, 'Not authorized'));
+    }
+    if (!file) {
+      return next(HttpError(400, 'Avatar is required'));
+    }
     const updatedUser = await uploadAvatar(user.id, file);
     res.status(200).json({
       avatarURL: updatedUser.avatarURL,

@@ -1,10 +1,10 @@
-// import User from "../db/models/User";
 import { User, Recipe, Favorite, Follow } from '../db/models/index.js';
+// import cloudinary from '../config/cloudinary.js';
 
 export const getUserById = async id => {
-  const user =  await User.findOne({ where: { id } });
+  const user = await User.findOne({ where: { id } });
   return user;
-}
+};
 
 export const getUserSatistics = async id => {
   const user = await getUserById(id);
@@ -20,16 +20,24 @@ export const getUserSatistics = async id => {
 };
 
 export const uploadAvatar = async (id, file) => {
+  // const user = await getUserById(id);
+  // if (!user) {
+  //   return null;
+  // }
+  // let avatar = null;
+  // if (file) {
+  //   const { url } = await cloudinary.uploader.upload(file.path, {
+  //     folder: 'avatars',
+  //   });
+  //   avatar = url;
+  // }
+  // await user.update({ avatarURL: avatar });
+  // return user;
   const user = await getUserById(id);
-  if (!user) {
-    return null;
-  }
-  let avatar = null;
-  if (file) {
-    // const newPath = path.join(avatarsDir, file.filename);
-    // await fs.rename(file.path, newPath);
-    // avatar = path.join("avatars", file.filename);
-  }
-  await user.update({ avatarURL: avatar });
+  if (!user || !file) return null;
+
+  user.avatarURL = file.path;
+  await user.save();
+
   return user;
 };
