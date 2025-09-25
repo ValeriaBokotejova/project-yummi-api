@@ -1,4 +1,4 @@
-import { HttpError } from '../utils/HttpError.js';
+import HttpError from '../utils/HttpError.js';
 import { uploadAvatar, getUserSatistics, getUserById } from '../services/usersService.js';
 
 export const getCurrentUserController = async (req, res, next) => {
