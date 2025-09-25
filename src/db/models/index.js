@@ -22,8 +22,8 @@ Area.hasMany(Recipe, { as: 'recipes', foreignKey: 'areaId' });
 Recipe.belongsTo(Area, { as: 'area', foreignKey: 'areaId' });
 
 // M:N (junction tables)
-Recipe.belongsToMany(Ingredient, { through: RecipeIngredient, foreignKey: 'recipeId' });
-Ingredient.belongsToMany(Recipe, { through: RecipeIngredient, foreignKey: 'ingredientId' });
+Recipe.belongsToMany(Ingredient, { through: RecipeIngredient, foreignKey: 'recipeId', as: 'ingredients' });
+Ingredient.belongsToMany(Recipe, { through: RecipeIngredient, foreignKey: 'ingredientId', as: 'recipes' });
 
 User.belongsToMany(Recipe, { through: Favorite, as: 'favoriteRecipes', foreignKey: 'userId' });
 Recipe.belongsToMany(User, { through: Favorite, as: 'usersWhoFavorited', foreignKey: 'recipeId' });
