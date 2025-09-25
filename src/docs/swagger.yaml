@@ -596,16 +596,6 @@ components:
           type: integer
           description: Cooking time in minutes
           example: 25
-        ownerId:
-          type: string
-          format: uuid
-        categoryId:
-          type: string
-          format: uuid
-        areaId:
-          type: string
-          format: uuid
-          nullable: true
         category:
           $ref: '#/components/schemas/Category'
         area:
@@ -634,12 +624,10 @@ components:
                 format: uuid
               name:
                 type: string
-              RecipeIngredient:
-                type: object
-                properties:
-                  measure:
-                    type: string
-                    example: 2 cups
+                example: Oatmeal
+              measure:
+                type: string
+                example: 2 cups
         createdAt:
           type: string
           format: date-time

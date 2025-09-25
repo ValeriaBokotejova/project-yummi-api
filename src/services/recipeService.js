@@ -41,10 +41,11 @@ export const searchRecipes = async (filters, pagination) => {
     const recipes = await Recipe.findAll({
       where: { id: recipeIds },
       include: includeClause,
+      attributes: { exclude: ['ownerId', 'categoryId', 'areaId'] },
     });
 
     return {
-      items: recipes,
+      items: recipes.map(recipe => transformRecipeData(recipe)),
       totalCount: totalCount,
     };
   }
@@ -73,12 +74,13 @@ export const searchRecipes = async (filters, pagination) => {
     limit,
     offset,
     distinct: true,
+    attributes: { exclude: ['ownerId', 'categoryId', 'areaId'] },
   };
 
   const { count, rows: recipes } = await Recipe.findAndCountAll(queryOptions);
 
   return {
-    items: recipes,
+    items: recipes.map(recipe => transformRecipeData(recipe)),
     totalCount: count,
   };
 };
@@ -86,13 +88,14 @@ export const searchRecipes = async (filters, pagination) => {
 export const getRecipeById = async id => {
   const recipe = await Recipe.findByPk(id, {
     include: getRecipeIncludes(),
+    attributes: { exclude: ['ownerId', 'categoryId', 'areaId'] },
   });
 
   if (!recipe) {
     throw new NotFoundError('Recipe');
   }
 
-  return recipe;
+  return transformRecipeData(recipe);
 };
 
 export const getPopularRecipes = async pagination => {
@@ -123,10 +126,11 @@ export const getPopularRecipes = async pagination => {
   const recipes = await Recipe.findAll({
     where: { id: recipeIds },
     include: getRecipeIncludes(),
+    attributes: { exclude: ['ownerId', 'categoryId', 'areaId'] },
   });
 
   return {
-    items: recipes,
+    items: recipes.map(recipe => transformRecipeData(recipe)),
     totalCount: totalCount,
   };
 };
@@ -266,7 +270,7 @@ function buildPopularRecipesWhereConditions(filters) {
 
   if (ingredient) {
     whereConditions.push(
-      'EXISTS (SELECT 1 FROM "recipe-ingredients" ri JOIN ingredients i ON ri."ingredientId" = i.id WHERE ri."recipeId" = r.id AND i.name ILIKE :ingredient)'
+      'EXISTS (SELECT 1 FROM recipe_ingredients ri JOIN ingredients i ON ri."ingredientId" = i.id WHERE ri."recipeId" = r.id AND i.name ILIKE :ingredient)'
     );
     replacements.ingredient = `%${ingredient}%`;
   }
@@ -308,8 +312,29 @@ async function getPopularRecipesTotalCount(whereConditions, replacements) {
   return parseInt(countResult[0].total);
 }
 
+// Transform recipe data to remove foreign keys and flatten ingredient measures
+function transformRecipeData(recipe) {
+  const recipeData = recipe.toJSON();
+
+  // Remove foreign key IDs
+  delete recipeData.ownerId;
+  delete recipeData.categoryId;
+  delete recipeData.areaId;
+
+  // Transform ingredients to flatten the measure
+  if (recipeData.ingredients) {
+    recipeData.ingredients = recipeData.ingredients.map(ingredient => ({
+      id: ingredient.id,
+      name: ingredient.name,
+      measure: ingredient.RecipeIngredient?.measure || ''
+    }));
+  }
+
+  return recipeData;
+}
+
 // Private helper functions for recipe includes
-async function getRecipeIncludes() {
+function getRecipeIncludes() {
   return [
     {
       model: User,
@@ -328,16 +353,18 @@ async function getRecipeIncludes() {
     },
     {
       model: Ingredient,
+      as: 'ingredients',
       through: {
         attributes: ['measure'],
+        as: 'RecipeIngredient',
       },
       attributes: ['id', 'name'],
     },
   ];
 }
 
-async function getRecipeIncludesWithIngredientFilter(ingredient) {
-  const includes = await getRecipeIncludes();
+function getRecipeIncludesWithIngredientFilter(ingredient) {
+  const includes = getRecipeIncludes();
 
   if (ingredient) {
     const ingredientInclude = includes.find(include => include.model === Ingredient);
@@ -354,3 +381,5 @@ async function getRecipeIncludesWithIngredientFilter(ingredient) {
 
   return includes;
 }
+
+
