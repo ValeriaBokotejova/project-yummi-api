@@ -1,5 +1,4 @@
 import { Recipe, User, Category, Area, Ingredient, RecipeIngredient, Favorite } from '../db/models/index.js';
-import { Op } from 'sequelize';
 import sequelize from '../db/connection.js';
 import { NotFoundError, UnauthorizedError, DuplicateError } from '../errors/DomainErrors.js';
 
@@ -326,7 +325,7 @@ function transformRecipeData(recipe) {
     recipeData.ingredients = recipeData.ingredients.map(ingredient => ({
       id: ingredient.id,
       name: ingredient.name,
-      measure: ingredient.RecipeIngredient?.measure || ''
+      measure: ingredient.RecipeIngredient?.measure || '',
     }));
   }
 
@@ -379,5 +378,3 @@ function getRecipeIncludesWithIngredientFilter(ingredientId) {
 
   return includes;
 }
-
-

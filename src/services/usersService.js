@@ -1,4 +1,4 @@
-import fs from "node:fs/promises";
+import fs from 'node:fs/promises';
 
 import { User, Recipe, Favorite, Follow } from '../db/models/index.js';
 import cloudinary from '../config/cloudinary.js';
@@ -33,7 +33,7 @@ export const uploadAvatar = async (id, file) => {
       use_filename: true,
     });
     avatar = url;
-    await fs.unlink(file.path)
+    await fs.unlink(file.path);
   }
   await user.update({ avatarURL: avatar });
   return user;
