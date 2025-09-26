@@ -6,6 +6,7 @@ import ingredientsRouter from './ingredientsRouter.js';
 import testimonialsRouter from './testimonialsRouter.js';
 import recipeRouter from './recipeRouter.js';
 import usersRouter from './usersRouter.js';
+import usersSocialRouter from './usersSocialRouter.js';
 
 const router = express.Router();
 
@@ -30,5 +31,7 @@ router.use('/areas', areasRouter);
 router.use('/ingredients', ingredientsRouter);
 
 router.use('/testimonials', testimonialsRouter);
+
+router.use('/users', usersSocialRouter);
 
 export default router;
