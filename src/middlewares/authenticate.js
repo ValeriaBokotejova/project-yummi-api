@@ -4,7 +4,7 @@ import HttpError from '../utils/HttpError.js';
 export default async function authenticate(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader) {
       throw new HttpError(401, 'Authorization header is missing');
     }

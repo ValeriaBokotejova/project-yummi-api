@@ -526,6 +526,124 @@ paths:
         '404':
           description: Recipe not found in favorites
 
+  /users/{id}/followers:
+    get:
+      summary: Get user's followers
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Followers list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FollowersResponse'
+        '404':
+          description: User not found
+
+  /users/{id}/following:
+    get:
+      summary: Get user's following
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Following list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FollowersResponse'
+        '404':
+          description: User not found
+
+  /users/{id}/follow:
+    post:
+      summary: Follow a user
+      description: Authenticated user follows the specified user
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Target user ID to follow
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Followed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FollowActionResponse'
+        '400':
+          description: Already following or invalid action
+        '401':
+          description: Authentication required
+        '404':
+          description: User not found
+
+  /users/{id}/unfollow:
+    delete:
+      summary: Unfollow a user
+      description: Authenticated user unfollows the specified user
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Target user ID to unfollow
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Unfollowed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FollowActionResponse'
+        '401':
+          description: Authentication required
+        '404':
+          description: Follow relation not found
+
 components:
   securitySchemes:
     bearerAuth:
@@ -700,3 +818,34 @@ components:
           type: array
           items:
             type: string
+
+    FollowersResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                example: 2b4439c1-a352-409a-92ff-382ab4cb3bbf
+              name:
+                type: string
+                example: Larry Pageim
+              avatarUrl:
+                type: string
+                nullable: true
+                example: null
+        totalCount:
+          type: integer
+          example: 1
+
+    FollowActionResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Status message about follow/unfollow action
+          example: Followed
