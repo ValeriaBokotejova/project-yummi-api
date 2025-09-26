@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import * as authController from '../controllers/authController.js';
 import validateBody from '../middlewares/validateBody.js';
 import authenticate from '../middlewares/authenticate.js';
@@ -11,5 +11,7 @@ authRouter.post('/register', validateBody(registerSchema), authController.regist
 authRouter.post('/login', validateBody(loginSchema), authController.login);
 
 authRouter.post('/logout', authenticate, authController.logout);
+
+authRouter.get('/current', authenticate, authController.getCurrentUser);
 
 export default authRouter;
