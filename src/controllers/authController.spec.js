@@ -49,13 +49,36 @@ describe('AuthController', () => {
 
   describe('register', () => {
     it('should register a user successfully', async () => {
-      req.body = { name: 'testuser', email: 'test@example.com', password: 'password123' };
+      const mockUser = {
+        id: 'user123',
+        email: 'test@example.com',
+        name: 'Test User',
+      };
+
+      mockAuthService.registerUser.mockResolvedValue(mockUser);
+
+      req.body = { email: 'test@example.com', password: 'password123' };
 
       await authController.register(req, res, next);
 
+      expect(mockAuthService.registerUser).toHaveBeenCalledWith(req.body);
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({});
+      expect(res.json).toHaveBeenCalledWith(mockUser);
       expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should handle registration errors', async () => {
+      const error = new Error('Registration failed');
+      mockAuthService.registerUser.mockRejectedValue(error);
+
+      req.body = { email: 'test@example.com', password: 'password123' };
+
+      await authController.register(req, res, next);
+
+      expect(mockAuthService.registerUser).toHaveBeenCalledWith(req.body);
+      expect(next).toHaveBeenCalledWith(error);
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
     });
   });
 });
