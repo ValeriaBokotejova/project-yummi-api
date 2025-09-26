@@ -8,7 +8,7 @@ export const getUserById = async id => {
   return user;
 };
 
-export const getUserSatistics = async id => {
+export const getUserStatistics = async id => {
   const user = await getUserById(id);
   if (!user) {
     return null;
