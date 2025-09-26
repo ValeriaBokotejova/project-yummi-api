@@ -5,7 +5,7 @@ import { ValidationError, NotFoundError } from '../errors/DomainErrors.js';
 
 const SALT_ROUNDS = 10;
 
-export const registerUser = async (userData) => {
+export const registerUser = async userData => {
   const { name, email, password } = userData;
 
   const hashedPassword = await bcryptjs.hash(password, SALT_ROUNDS);
@@ -24,15 +24,13 @@ export const registerUser = async (userData) => {
   };
 };
 
-export const loginUser = async (payload) => {
+export const loginUser = async payload => {
   const { email, password } = payload;
-  const user = await User.findOne({ email: email.toLowerCase() });
-  if (!user)
-    return new ValidationError('Email or password is wrong');
+  const user = await User.findOne({ where: { email: email.toLowerCase() } });
+  if (!user) throw new ValidationError('Email or password is wrong');
 
   const passwordMatch = await bcryptjs.compare(password, user.password);
-  if (!passwordMatch)
-    return new ValidationError('Email or password is wrong');
+  if (!passwordMatch) throw new ValidationError('Email or password is wrong');
 
   const tokenPayload = { id: user.id, email: user.email, name: user.name };
   const token = createToken(tokenPayload);
@@ -51,7 +49,7 @@ export const loginUser = async (payload) => {
   };
 };
 
-export const getUserById = async (userId) => {
+export const getUserById = async userId => {
   const user = await User.findByPk(userId, {
     attributes: { exclude: ['password'] },
   });

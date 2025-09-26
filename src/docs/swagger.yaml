@@ -529,7 +529,7 @@ paths:
   /users/{id}/followers:
     get:
       summary: Get user's followers
-      tags: [ Users ]
+      tags: [Users]
       parameters:
         - in: path
           name: id
@@ -560,7 +560,7 @@ paths:
   /users/{id}/following:
     get:
       summary: Get user's following
-      tags: [ Users ]
+      tags: [Users]
       parameters:
         - in: path
           name: id
@@ -592,9 +592,9 @@ paths:
     post:
       summary: Follow a user
       description: Authenticated user follows the specified user
-      tags: [ Users ]
+      tags: [Users]
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -621,9 +621,9 @@ paths:
     delete:
       summary: Unfollow a user
       description: Authenticated user unfollows the specified user
-      tags: [ Users ]
+      tags: [Users]
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       parameters:
         - in: path
           name: id

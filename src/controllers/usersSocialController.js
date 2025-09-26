@@ -1,4 +1,3 @@
-// src/controllers/usersSocialController.js
 import * as followService from '../services/followService.js';
 
 export const getFollowers = async (req, res, next) => {
@@ -25,8 +24,8 @@ export const getFollowing = async (req, res, next) => {
 
 export const follow = async (req, res, next) => {
   try {
-    const { id } = req.params;        // target user
-    const currentUserId = req.user.id; // потребує authenticate
+    const { id } = req.params;
+    const currentUserId = req.user.id;
     const result = await followService.follow(id, currentUserId);
     res.status(200).json(result);
   } catch (error) {

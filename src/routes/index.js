@@ -22,7 +22,10 @@ router.get('/health', (req, res) => {
 router.use('/auth', authRouter);
 
 router.use('/recipes', recipeRouter);
+
 router.use('/users', usersRouter);
+
+router.use('/users', usersSocialRouter);
 
 router.use('/categories', categoriesRouter);
 
@@ -31,7 +34,5 @@ router.use('/areas', areasRouter);
 router.use('/ingredients', ingredientsRouter);
 
 router.use('/testimonials', testimonialsRouter);
-
-router.use('/users', usersSocialRouter);
 
 export default router;
