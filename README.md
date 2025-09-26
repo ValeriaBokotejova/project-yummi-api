@@ -197,10 +197,10 @@ The Sequelize CLI is configured via `.sequelizerc`:
 const path = require('path');
 
 module.exports = {
-  'config': path.resolve('src', 'db', 'config', 'config.js'),
+  config: path.resolve('src', 'db', 'config', 'config.js'),
   'models-path': path.resolve('src', 'db', 'models'),
   'seeders-path': path.resolve('src', 'db', 'seeders'),
-  'migrations-path': path.resolve('src', 'db', 'migrations')
+  'migrations-path': path.resolve('src', 'db', 'migrations'),
 };
 ```
 
@@ -403,10 +403,6 @@ npx sequelize-cli db:migrate
 npx sequelize-cli db:seed:all
 ```
 
-#### Check Database Status
-
-```bash
-# View migration status
 #### Check Database Status
 
 ```bash

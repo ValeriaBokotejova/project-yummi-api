@@ -1,11 +1,11 @@
 import { UniqueConstraintError } from 'sequelize';
 import HttpError from '../utils/HttpError.js';
-import { 
-  NotFoundError, 
-  ConflictError, 
-  ValidationError, 
-  UnauthorizedError, 
-  DuplicateError 
+import {
+  NotFoundError,
+  ConflictError,
+  ValidationError,
+  UnauthorizedError,
+  DuplicateError,
 } from '../errors/DomainErrors.js';
 
 const errorHandler = (err, req, res, next) => {
@@ -39,7 +39,7 @@ const errorHandler = (err, req, res, next) => {
 
   // Default fallback
   console.error(err);
-  return next(HttpError(500, "Internal Server Error"));
+  return next(HttpError(500, 'Internal Server Error'));
 };
 
 export default errorHandler;

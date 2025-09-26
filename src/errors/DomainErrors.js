@@ -1,34 +1,34 @@
 export class NotFoundError extends Error {
-  constructor(entity = "Resource") {
+  constructor(entity = 'Resource') {
     super(`${entity} not found`);
-    this.name = "NotFoundError";
+    this.name = 'NotFoundError';
   }
 }
 
 export class ConflictError extends Error {
-  constructor(message = "Conflict occurred") {
+  constructor(message = 'Conflict occurred') {
     super(message);
-    this.name = "ConflictError";
+    this.name = 'ConflictError';
   }
 }
 
 export class ValidationError extends Error {
-  constructor(message = "Validation failed") {
+  constructor(message = 'Validation failed') {
     super(message);
-    this.name = "ValidationError";
+    this.name = 'ValidationError';
   }
 }
 
 export class UnauthorizedError extends Error {
-  constructor(message = "Not authorized") {
+  constructor(message = 'Not authorized') {
     super(message);
-    this.name = "UnauthorizedError";
+    this.name = 'UnauthorizedError';
   }
 }
 
 export class DuplicateError extends Error {
-  constructor(message = "Resource already exists") {
+  constructor(message = 'Resource already exists') {
     super(message);
-    this.name = "DuplicateError";
+    this.name = 'DuplicateError';
   }
 }

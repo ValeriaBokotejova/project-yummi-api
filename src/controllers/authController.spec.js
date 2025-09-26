@@ -49,7 +49,7 @@ describe('AuthController', () => {
 
   describe('register', () => {
     it('should register a user successfully', async () => {
-      req.body = { username: 'testuser', email: 'test@example.com', password: 'password123' };
+      req.body = { name: 'testuser', email: 'test@example.com', password: 'password123' };
 
       await authController.register(req, res, next);
 

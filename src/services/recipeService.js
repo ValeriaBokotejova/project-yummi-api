@@ -1,5 +1,4 @@
 import { Recipe, User, Category, Area, Ingredient, RecipeIngredient, Favorite } from '../db/models/index.js';
-import { Op } from 'sequelize';
 import sequelize from '../db/connection.js';
 import { NotFoundError, UnauthorizedError, DuplicateError } from '../errors/DomainErrors.js';
 
@@ -270,9 +269,9 @@ function buildPopularRecipesWhereConditions(filters) {
 
   if (ingredient) {
     whereConditions.push(
-      'EXISTS (SELECT 1 FROM recipe_ingredients ri JOIN ingredients i ON ri."ingredientId" = i.id WHERE ri."recipeId" = r.id AND i.name ILIKE :ingredient)'
+      'EXISTS (SELECT 1 FROM recipe_ingredients ri WHERE ri."recipeId" = r.id AND ri."ingredientId" = :ingredient)'
     );
-    replacements.ingredient = `%${ingredient}%`;
+    replacements.ingredient = ingredient;
   }
 
   return { whereConditions, replacements };
@@ -326,7 +325,7 @@ function transformRecipeData(recipe) {
     recipeData.ingredients = recipeData.ingredients.map(ingredient => ({
       id: ingredient.id,
       name: ingredient.name,
-      measure: ingredient.RecipeIngredient?.measure || ''
+      measure: ingredient.RecipeIngredient?.measure || '',
     }));
   }
 
@@ -363,17 +362,15 @@ function getRecipeIncludes() {
   ];
 }
 
-function getRecipeIncludesWithIngredientFilter(ingredient) {
+function getRecipeIncludesWithIngredientFilter(ingredientId) {
   const includes = getRecipeIncludes();
 
-  if (ingredient) {
+  if (ingredientId) {
     const ingredientInclude = includes.find(include => include.model === Ingredient);
     if (ingredientInclude) {
       Object.assign(ingredientInclude, {
         where: {
-          name: {
-            [Op.iLike]: `%${ingredient}%`,
-          },
+          id: ingredientId,
         },
       });
     }
@@ -381,5 +378,3 @@ function getRecipeIncludesWithIngredientFilter(ingredient) {
 
   return includes;
 }
-
-

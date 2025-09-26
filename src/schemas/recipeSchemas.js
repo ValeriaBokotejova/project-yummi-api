@@ -8,12 +8,15 @@ export const createRecipeSchema = Joi.object({
   time: Joi.number().integer().min(1).required(),
   categoryId: Joi.string().uuid().required(),
   areaId: Joi.string().uuid().optional(),
-  ingredients: Joi.array().items(
-    Joi.object({
-      id: Joi.string().uuid().required(),
-      measure: Joi.string().required(),
-    })
-  ).min(0).required(),
+  ingredients: Joi.array()
+    .items(
+      Joi.object({
+        id: Joi.string().uuid().required(),
+        measure: Joi.string().required(),
+      })
+    )
+    .min(0)
+    .required(),
 });
 
 export const updateRecipeSchema = Joi.object({
@@ -24,17 +27,20 @@ export const updateRecipeSchema = Joi.object({
   time: Joi.number().integer().min(1).optional(),
   categoryId: Joi.string().uuid().optional(),
   areaId: Joi.string().uuid().optional(),
-  ingredients: Joi.array().items(
-    Joi.object({
-      id: Joi.string().uuid().required(),
-      measure: Joi.string().required(),
-    })
-  ).min(0).optional(),
+  ingredients: Joi.array()
+    .items(
+      Joi.object({
+        id: Joi.string().uuid().required(),
+        measure: Joi.string().required(),
+      })
+    )
+    .min(0)
+    .optional(),
 });
 
 export const searchRecipesSchema = Joi.object({
   category: Joi.string().uuid().optional(),
-  ingredient: Joi.string().trim().optional(),
+  ingredient: Joi.string().uuid().optional(),
   area: Joi.string().uuid().optional(),
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(50).default(12),
