@@ -270,9 +270,9 @@ function buildPopularRecipesWhereConditions(filters) {
 
   if (ingredient) {
     whereConditions.push(
-      'EXISTS (SELECT 1 FROM recipe_ingredients ri JOIN ingredients i ON ri."ingredientId" = i.id WHERE ri."recipeId" = r.id AND i.name ILIKE :ingredient)'
+      'EXISTS (SELECT 1 FROM recipe_ingredients ri WHERE ri."recipeId" = r.id AND ri."ingredientId" = :ingredient)'
     );
-    replacements.ingredient = `%${ingredient}%`;
+    replacements.ingredient = ingredient;
   }
 
   return { whereConditions, replacements };
@@ -363,17 +363,15 @@ function getRecipeIncludes() {
   ];
 }
 
-function getRecipeIncludesWithIngredientFilter(ingredient) {
+function getRecipeIncludesWithIngredientFilter(ingredientId) {
   const includes = getRecipeIncludes();
 
-  if (ingredient) {
+  if (ingredientId) {
     const ingredientInclude = includes.find(include => include.model === Ingredient);
     if (ingredientInclude) {
       Object.assign(ingredientInclude, {
         where: {
-          name: {
-            [Op.iLike]: `%${ingredient}%`,
-          },
+          id: ingredientId,
         },
       });
     }

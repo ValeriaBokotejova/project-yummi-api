@@ -34,7 +34,7 @@ export const updateRecipeSchema = Joi.object({
 
 export const searchRecipesSchema = Joi.object({
   category: Joi.string().uuid().optional(),
-  ingredient: Joi.string().trim().optional(),
+  ingredient: Joi.string().uuid().optional(),
   area: Joi.string().uuid().optional(),
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(50).default(12),
