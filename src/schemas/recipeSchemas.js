@@ -4,7 +4,7 @@ export const createRecipeSchema = Joi.object({
   title: Joi.string().trim().min(1).max(200).required(),
   description: Joi.string().trim().max(1000).optional(),
   instructions: Joi.string().trim().min(1).required(),
-  thumbUrl: Joi.string().uri().required(),
+  thumbUrl: Joi.string().uri().optional(),
   time: Joi.number().integer().min(1).required(),
   categoryId: Joi.string().uuid().required(),
   areaId: Joi.string().uuid().optional(),

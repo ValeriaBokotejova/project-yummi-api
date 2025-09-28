@@ -1,6 +1,8 @@
 import { Recipe, User, Category, Area, Ingredient, RecipeIngredient, Favorite } from '../db/models/index.js';
 import sequelize from '../db/connection.js';
 import { NotFoundError, UnauthorizedError, DuplicateError } from '../errors/DomainErrors.js';
+import cloudinary from '../config/cloudinary.js';
+import fs from 'node:fs/promises';
 
 export const searchRecipes = async (filters, pagination) => {
   const { page = 1, limit = 12 } = pagination;
@@ -134,11 +136,34 @@ export const getPopularRecipes = async pagination => {
   };
 };
 
-export const createRecipe = async (recipeData, userId) => {
+export const createRecipe = async (recipeData, userId, file = null) => {
   const { ingredients, ...recipeFields } = recipeData;
+
+  let thumbUrl = recipeFields.thumbUrl;
+
+  // Upload image to Cloudinary if file is provided
+  if (file) {
+    try {
+      const { url } = await cloudinary.uploader.upload(file.path, {
+        folder: 'recipes',
+        use_filename: true,
+      });
+      thumbUrl = url;
+      
+      // Clean up temporary file
+      await fs.unlink(file.path);
+    } catch (error) {
+      // Clean up temporary file in case of error
+      if (file.path) {
+        await fs.unlink(file.path).catch(() => {});
+      }
+      throw new Error(`Failed to upload image: ${error.message}`);
+    }
+  }
 
   const recipe = await Recipe.create({
     ...recipeFields,
+    thumbUrl,
     ownerId: userId,
   });
 

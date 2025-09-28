@@ -46,8 +46,9 @@ export const createRecipe = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const recipeData = req.body;
+    const file = req.file; // Multer adds file to req.file
 
-    const recipe = await recipeService.createRecipe(recipeData, userId);
+    const recipe = await recipeService.createRecipe(recipeData, userId, file);
 
     res.status(201).json(recipe);
   } catch (error) {
