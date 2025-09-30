@@ -139,7 +139,7 @@ export const getPopularRecipes = async pagination => {
 export const createRecipe = async (recipeData, userId, file = null) => {
   const { ingredients, ...recipeFields } = recipeData;
 
-  let thumbUrl = recipeFields.thumbUrl;
+  let thumbUrl = null;
 
   // Upload image to Cloudinary if file is provided
   if (file) {
