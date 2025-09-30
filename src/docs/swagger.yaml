@@ -316,16 +316,84 @@ paths:
                     description: Total number of recipes matching the filters
     post:
       summary: Create recipe
-      description: Private endpoint for creating a new recipe
+      description: |
+        Private endpoint for creating a new recipe with image upload.
+
+        **Authentication Required**: Bearer JWT token in Authorization header
+
+        **File Upload Constraints**:
+        - Maximum file size: 5MB
+        - Accepted formats: image/* (JPEG, PNG, GIF, WebP, etc.)
+        - Field name: 'image'
+
+        **Request Format**: multipart/form-data
+
+        **Note**: The ingredients field should be a JSON string array containing objects with 'id' and 'measure' properties.
       tags: [Recipes]
       security:
         - bearerAuth: []
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CreateRecipeRequest'
+              type: object
+              required:
+                - title
+                - instructions
+                - time
+                - categoryId
+                - ingredients
+                - image
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                  description: Recipe title
+                  example: "Apam balik"
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: Recipe description (optional)
+                  example: "A popular Malaysian dessert made with a crispy and fluffy pancake-like batter"
+                instructions:
+                  type: string
+                  minLength: 1
+                  description: Detailed cooking instructions
+                  example: "Mix milk, oil and egg together. Sift flour, baking powder and salt into the mixture..."
+                time:
+                  type: integer
+                  minimum: 1
+                  description: Cooking time in minutes
+                  example: 10
+                categoryId:
+                  type: string
+                  format: uuid
+                  description: Category UUID (required)
+                  example: "33805d4f-57c6-433a-a529-f5d1da6bbf30"
+                areaId:
+                  type: string
+                  format: uuid
+                  description: Area UUID (optional)
+                  example: "c43dcaae-2dc4-4de1-9a82-05307801d247"
+                ingredients:
+                  type: string
+                  description: |
+                    JSON string array of ingredients with their measures.
+                    Each ingredient object must have 'id' (UUID) and 'measure' (string) properties.
+                  example: '[{"id":"be4695eb-740b-470e-8b58-e8f07bfa8ba5","measure":"200ml"},{"id":"ba974136-db23-4b1f-938a-f72fe6c3b587","measure":"60ml"}]'
+                image:
+                  type: string
+                  format: binary
+                  description: |
+                    Recipe image file
+                    - Max size: 5MB
+                    - Formats: image/* (JPEG, PNG, GIF, WebP, etc.)
+                    - Required field
+            encoding:
+              image:
+                contentType: image/*
       responses:
         '201':
           description: Recipe created successfully
@@ -334,9 +402,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/Recipe'
         '400':
-          description: Validation error
+          description: |
+            Bad request - Validation error or file upload error:
+            - Invalid file format (only images allowed)
+            - File size exceeds 5MB limit
+            - Missing required fields
+            - Invalid JSON format for ingredients
         '401':
-          description: Authentication required
+          description: |
+            Unauthorized:
+            - Missing Authorization header
+            - Invalid or expired JWT token
+            - Authorization header format must be: Bearer <token>
+        '500':
+          description: Internal server error
 
   /recipes/popular:
     get:
@@ -399,7 +478,22 @@ paths:
           description: Recipe not found
     patch:
       summary: Update recipe
-      description: Private endpoint for updating own recipe
+      description: |
+        Private endpoint for updating own recipe with optional image upload.
+        
+        **Authentication Required**: Bearer JWT token in Authorization header
+        
+        **File Upload Constraints** (optional):
+        - Maximum file size: 5MB
+        - Accepted formats: image/* (JPEG, PNG, GIF, WebP, etc.)
+        - Field name: 'image'
+        
+        **Request Format**: multipart/form-data (to support optional image upload)
+        
+        **Note**: 
+        - All fields are optional for updates
+        - The ingredients field should be a JSON string array containing objects with 'id' and 'measure' properties
+        - If no image is provided, the existing image will be kept
       tags: [Recipes]
       security:
         - bearerAuth: []
@@ -414,9 +508,58 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/UpdateRecipeRequest'
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                  description: Recipe title (optional)
+                  example: "Updated Apam balik"
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: Recipe description (optional)
+                  example: "An updated description of this Malaysian dessert"
+                instructions:
+                  type: string
+                  minLength: 1
+                  description: Detailed cooking instructions (optional)
+                  example: "Updated cooking instructions..."
+                time:
+                  type: integer
+                  minimum: 1
+                  description: Cooking time in minutes (optional)
+                  example: 15
+                categoryId:
+                  type: string
+                  format: uuid
+                  description: Category UUID (optional)
+                  example: "33805d4f-57c6-433a-a529-f5d1da6bbf30"
+                areaId:
+                  type: string
+                  format: uuid
+                  description: Area UUID (optional)
+                  example: "c43dcaae-2dc4-4de1-9a82-05307801d247"
+                ingredients:
+                  type: string
+                  description: |
+                    JSON string array of ingredients with their measures (optional).
+                    Each ingredient object must have 'id' (UUID) and 'measure' (string) properties.
+                  example: '[{"id":"be4695eb-740b-470e-8b58-e8f07bfa8ba5","measure":"250ml"},{"id":"ba974136-db23-4b1f-938a-f72fe6c3b587","measure":"80ml"}]'
+                image:
+                  type: string
+                  format: binary
+                  description: |
+                    Recipe image file (optional)
+                    - Max size: 5MB
+                    - Formats: image/* (JPEG, PNG, GIF, WebP, etc.)
+                    - If not provided, existing image will be kept
+            encoding:
+              image:
+                contentType: image/*
       responses:
         '200':
           description: Recipe updated successfully
@@ -425,11 +568,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/Recipe'
         '400':
-          description: Validation error
+          description: |
+            Bad request - Validation error or file upload error:
+            - Invalid file format (only images allowed)
+            - File size exceeds 5MB limit
+            - Invalid JSON format for ingredients
         '401':
-          description: Authentication required
+          description: |
+            Unauthorized:
+            - Missing Authorization header
+            - Invalid or expired JWT token
+            - Authorization header format must be: Bearer <token>
         '403':
-          description: Access denied
+          description: Access denied - not the owner of the recipe
         '404':
           description: Recipe not found
     delete:

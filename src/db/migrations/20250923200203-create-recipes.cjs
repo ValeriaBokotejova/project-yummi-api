@@ -24,7 +24,7 @@ module.exports = {
       },
       thumbUrl: {
         type: Sequelize.STRING,
-        allowNull: true,
+        allowNull: false,
       },
       time: {
         type: Sequelize.INTEGER,

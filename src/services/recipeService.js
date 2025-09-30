@@ -135,15 +135,10 @@ export const getPopularRecipes = async pagination => {
   };
 };
 
-export const createRecipe = async (recipeData, userId, file = null) => {
+export const createRecipe = async (recipeData, file, userId) => {
   const { ingredients, ...recipeFields } = recipeData;
 
-  let thumbUrl = null;
-
-  // Upload image to Cloudinary if file is provided
-  if (file) {
-    thumbUrl = await cloudinaryService.uploadImage(file, 'recipes');
-  }
+  const thumbUrl = await cloudinaryService.uploadImage(file, 'recipes');
 
   const recipe = await Recipe.create({
     ...recipeFields,
@@ -166,7 +161,7 @@ export const createRecipe = async (recipeData, userId, file = null) => {
   return await getRecipeById(recipe.id);
 };
 
-export const updateRecipe = async (id, recipeData, userId) => {
+export const updateRecipe = async (id, recipeData, file, userId) => {
   const recipe = await Recipe.findByPk(id);
 
   if (!recipe) {
@@ -178,6 +173,12 @@ export const updateRecipe = async (id, recipeData, userId) => {
   }
 
   const { ingredients, ...recipeFields } = recipeData;
+
+  // Handle optional image upload
+  if (file) {
+    const thumbUrl = await cloudinaryService.uploadImage(file, 'recipes');
+    recipeFields.thumbUrl = thumbUrl;
+  }
 
   await recipe.update(recipeFields);
 

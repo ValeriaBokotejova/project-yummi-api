@@ -19,6 +19,11 @@ const limits = {
 };
 
 const fileFilter = (req, file, cb) => {
+  // Allow no file (for optional uploads)
+  if (!file) {
+    return cb(null, false);
+  }
+  
   if (!file.mimetype.startsWith('image/')) {
     return cb(HttpError(400, 'Only image files are allowed'));
   }

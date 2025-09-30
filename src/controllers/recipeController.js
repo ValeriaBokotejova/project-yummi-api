@@ -1,4 +1,5 @@
 import * as recipeService from '../services/recipeService.js';
+import HttpError from '../utils/HttpError.js';
 
 // Public endpoints
 
@@ -47,8 +48,11 @@ export const createRecipe = async (req, res, next) => {
     const userId = req.user.id;
     const recipeData = req.body;
     const file = req.file; // Multer adds file to req.file
+    if (!file) {
+      return next(HttpError(400, 'Image file is required'));
+    }
 
-    const recipe = await recipeService.createRecipe(recipeData, userId, file);
+    const recipe = await recipeService.createRecipe(recipeData, file, userId);
 
     res.status(201).json(recipe);
   } catch (error) {
@@ -61,8 +65,9 @@ export const updateRecipe = async (req, res, next) => {
     const { id } = req.params;
     const userId = req.user.id;
     const recipeData = req.body;
+    const file = req.file; // Multer adds file to req.file (optional for updates)
 
-    const recipe = await recipeService.updateRecipe(id, recipeData, userId);
+    const recipe = await recipeService.updateRecipe(id, recipeData, file, userId);
 
     res.status(200).json(recipe);
   } catch (error) {

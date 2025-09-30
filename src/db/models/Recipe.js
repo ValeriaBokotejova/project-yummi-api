@@ -25,7 +25,7 @@ const Recipe = sequelize.define(
     },
     thumbUrl: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
     },
     time: {
       type: DataTypes.INTEGER,
