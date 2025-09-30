@@ -6,19 +6,19 @@ export default async function authenticate(req, res, next) {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      throw new HttpError(401, 'Authorization header is missing');
+      throw HttpError(401, 'Authorization header is missing');
     }
 
     const [bearer, token] = authHeader.split(' ');
 
     if (bearer !== 'Bearer' || !token) {
-      throw new HttpError(401, 'Authorization header must be in format: Bearer <token>');
+      throw HttpError(401, 'Authorization header must be in format: Bearer <token>');
     }
 
     const { payload, error } = verifyToken(token);
 
     if (error) {
-      throw new HttpError(401, 'Invalid or expired token');
+      throw HttpError(401, 'Invalid or expired token');
     }
 
     req.user = payload;
