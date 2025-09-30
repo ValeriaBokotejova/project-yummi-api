@@ -3,6 +3,8 @@ import * as recipeController from '../controllers/recipeController.js';
 import authenticate from '../middlewares/authenticate.js';
 import validateBody from '../middlewares/validateBody.js';
 import validateQuery from '../middlewares/validateQuery.js';
+import uploadRecipeImage from '../middlewares/uploadRecipeImage.js';
+import parseMultipartBody from '../middlewares/parseMultipartBody.js';
 import {
   createRecipeSchema,
   updateRecipeSchema,
@@ -18,8 +20,8 @@ router.get('/popular', validateQuery(getPopularRecipesSchema), recipeController.
 router.get('/:id', recipeController.getRecipeById);
 
 // Private endpoints (authentication is required)
-router.post('', authenticate, validateBody(createRecipeSchema), recipeController.createRecipe);
-router.patch('/:id', authenticate, validateBody(updateRecipeSchema), recipeController.updateRecipe);
+router.post('', authenticate, uploadRecipeImage.single('image'), parseMultipartBody, validateBody(createRecipeSchema), recipeController.createRecipe);
+router.patch('/:id', authenticate, uploadRecipeImage.single('image'), parseMultipartBody, validateBody(updateRecipeSchema), recipeController.updateRecipe);
 router.delete('/:id', authenticate, recipeController.deleteRecipe);
 router.post('/:id/favorite', authenticate, recipeController.addToFavorites);
 router.delete('/:id/favorite', authenticate, recipeController.removeFromFavorites);

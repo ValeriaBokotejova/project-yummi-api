@@ -50,7 +50,9 @@ export const getUserByIdController = async (req, res, next) => {
 
 export const uploadAvatarController = async (req, res, next) => {
   try {
+    // File exists check is on middleware level
     const { user, file } = req;
+
     if (!file) {
       return next(HttpError(400, 'Avatar is required'));
     }

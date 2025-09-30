@@ -26,9 +26,15 @@ const errorHandler = (err, req, res, next) => {
     return next(HttpError(409, err.message));
   }
 
-  // Validation errors from Joi (HttpError with status 400)
+  // HTTP errors with status codes (from HttpError function)
   if (err.status === 400) {
     return next(HttpError(400, err.message));
+  }
+  if (err.status === 401) {
+    return next(HttpError(401, err.message));
+  }
+  if (err.status === 403) {
+    return next(HttpError(403, err.message));
   }
 
   // Database errors

@@ -1,6 +1,7 @@
 import { Recipe, User, Category, Area, Ingredient, RecipeIngredient, Favorite } from '../db/models/index.js';
 import sequelize from '../db/connection.js';
 import { NotFoundError, UnauthorizedError, DuplicateError } from '../errors/DomainErrors.js';
+import * as cloudinaryService from './cloudinaryService.js';
 
 export const searchRecipes = async (filters, pagination) => {
   const { page = 1, limit = 12 } = pagination;
@@ -134,11 +135,14 @@ export const getPopularRecipes = async pagination => {
   };
 };
 
-export const createRecipe = async (recipeData, userId) => {
+export const createRecipe = async (recipeData, file, userId) => {
   const { ingredients, ...recipeFields } = recipeData;
+
+  const thumbUrl = await cloudinaryService.uploadImage(file, 'recipes');
 
   const recipe = await Recipe.create({
     ...recipeFields,
+    thumbUrl,
     ownerId: userId,
   });
 
@@ -157,7 +161,7 @@ export const createRecipe = async (recipeData, userId) => {
   return await getRecipeById(recipe.id);
 };
 
-export const updateRecipe = async (id, recipeData, userId) => {
+export const updateRecipe = async (id, recipeData, file, userId) => {
   const recipe = await Recipe.findByPk(id);
 
   if (!recipe) {
@@ -169,6 +173,12 @@ export const updateRecipe = async (id, recipeData, userId) => {
   }
 
   const { ingredients, ...recipeFields } = recipeData;
+
+  // Handle optional image upload
+  if (file) {
+    const thumbUrl = await cloudinaryService.uploadImage(file, 'recipes');
+    recipeFields.thumbUrl = thumbUrl;
+  }
 
   await recipe.update(recipeFields);
 
