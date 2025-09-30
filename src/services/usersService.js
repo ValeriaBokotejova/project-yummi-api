@@ -1,7 +1,5 @@
-import fs from 'node:fs/promises';
-
 import { User, Recipe, Favorite, Follow } from '../db/models/index.js';
-import cloudinary from '../config/cloudinary.js';
+import * as cloudinaryService from './cloudinaryService.js';
 
 export const getUserById = async id => {
   const user = await User.findOne({ where: { id } });
@@ -28,12 +26,7 @@ export const uploadAvatar = async (id, file) => {
   }
   let avatar = null;
   if (file) {
-    const { url } = await cloudinary.uploader.upload(file.path, {
-      folder: 'avatars',
-      use_filename: true,
-    });
-    avatar = url;
-    await fs.unlink(file.path);
+    avatar = await cloudinaryService.uploadImage(file, 'avatars');
   }
   await user.update({ avatarURL: avatar });
   return user;
