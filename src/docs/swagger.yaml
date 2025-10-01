@@ -100,6 +100,27 @@ paths:
         '401':
           description: Invalid credentials
 
+  /auth/current:
+    get:
+      summary: Get current user
+      description: Get current authenticated user information
+      tags: [Authentication]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: |
+            Unauthorized:
+            - Missing Authorization header
+            - Invalid or expired JWT token
+            - Authorization header format must be: Bearer <token>
+
   /auth/logout:
     post:
       summary: Logout user

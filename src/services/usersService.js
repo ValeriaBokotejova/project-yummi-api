@@ -11,7 +11,7 @@ export const getUserStatistics = async id => {
   if (!user) {
     return null;
   }
-  const createdRecipes = await Recipe.count({ where: { authorId: user.id } });
+  const createdRecipes = await Recipe.count({ where: { ownerId: user.id } });
   const favoriteCount = await Favorite.count({ where: { userId: user.id } });
   const followersCount = await Follow.count({ where: { followingId: user.id } });
   const followingCount = await Follow.count({ where: { followerId: user.id } });
@@ -28,6 +28,6 @@ export const uploadAvatar = async (id, file) => {
   if (file) {
     avatar = await cloudinaryService.uploadImage(file, 'avatars');
   }
-  await user.update({ avatarURL: avatar });
+  await user.update({ avatarUrl: avatar });
   return user;
 };

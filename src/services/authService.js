@@ -15,12 +15,20 @@ export const registerUser = async userData => {
     email,
     password: hashedPassword,
   });
+  const tokenPayload = { id: user.id, email: user.email, name: user.name };
+  const token = createToken(tokenPayload);
+
+  user.token = token;
+  await user.save();
 
   return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    avatarUrl: user.avatarUrl,
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+    },
   };
 };
 

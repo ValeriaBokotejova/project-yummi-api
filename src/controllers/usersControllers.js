@@ -13,7 +13,7 @@ export const getCurrentUserController = async (req, res, next) => {
       id: user.id,
       email: user.email,
       name: user.name,
-      avatarURL: user.avatarURL,
+      avatarUrl: user.avatarUrl,
       createdRecipes,
       favoriteCount,
       followersCount,
@@ -39,7 +39,7 @@ export const getUserByIdController = async (req, res, next) => {
     res.status(200).json({
       id: user.id,
       name: user.name,
-      avatarURL: user.avatarURL,
+      avatarUrl: user.avatarUrl,
       createdRecipes,
       followersCount,
     });
@@ -50,7 +50,6 @@ export const getUserByIdController = async (req, res, next) => {
 
 export const uploadAvatarController = async (req, res, next) => {
   try {
-    // File exists check is on middleware level
     const { user, file } = req;
 
     if (!file) {
@@ -58,7 +57,7 @@ export const uploadAvatarController = async (req, res, next) => {
     }
     const updatedUser = await uploadAvatar(user.id, file);
     res.status(200).json({
-      avatarURL: updatedUser.avatarURL,
+      avatarUrl: updatedUser.avatarUrl,
     });
   } catch (error) {
     next(error);
