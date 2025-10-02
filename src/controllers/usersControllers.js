@@ -1,5 +1,5 @@
 import HttpError from '../utils/HttpError.js';
-import { uploadAvatar, getUserStatistics, getUserById } from '../services/usersService.js';
+import { uploadAvatar, getUserStatistics, getUserById, getAvatar } from '../services/usersService.js';
 
 export const getCurrentUserController = async (req, res, next) => {
   try {
@@ -8,12 +8,13 @@ export const getCurrentUserController = async (req, res, next) => {
     if (!statistics) {
       return next(HttpError(404, 'User not found'));
     }
+    const avatar = await getAvatar(user.id);
     const { createdRecipes, favoriteCount, followersCount, followingCount } = statistics;
     res.status(200).json({
       id: user.id,
       email: user.email,
       name: user.name,
-      avatarUrl: user.avatarUrl,
+      avatarUrl: avatar,
       createdRecipes,
       favoriteCount,
       followersCount,
