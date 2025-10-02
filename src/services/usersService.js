@@ -19,6 +19,14 @@ export const getUserStatistics = async id => {
   return { createdRecipes, favoriteCount, followersCount, followingCount };
 };
 
+export const getAvatar = async id => {
+  const user = await getUserById(id);
+  if (!user) {
+    return null;
+  }
+  return user.avatarUrl;
+}
+
 export const uploadAvatar = async (id, file) => {
   const user = await getUserById(id);
   if (!user) {
