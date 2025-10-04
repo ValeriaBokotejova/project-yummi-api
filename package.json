@@ -1,11 +1,15 @@
 {
   "name": "project-yummi-api",
   "version": "1.0.0",
-  "description": "",
+  "description": "Yummi API — recipes backend (Node/Express/Sequelize/Postgres)",
   "type": "module",
+  "engines": { "node": ">=18" },
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "migrate": "npx sequelize-cli db:migrate",
+    "seed:ifempty": "node scripts/seed-if-empty.js",
+    "render-start": "npm run migrate && npm run seed:ifempty && npm run start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --check .",
