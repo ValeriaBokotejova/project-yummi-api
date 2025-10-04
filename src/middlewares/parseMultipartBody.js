@@ -6,10 +6,11 @@ import HttpError from '../utils/HttpError.js';
  */
 const parseMultipartBody = (req, res, next) => {
   // Check if this is a multipart request by checking content-type or if multer processed it
-  const isMultipart = req.headers['content-type']?.includes('multipart/form-data') || 
-                      req.file || 
-                      req.files || 
-                      Object.keys(req.body).length > 0;
+  const isMultipart =
+    req.headers['content-type']?.includes('multipart/form-data') ||
+    req.file ||
+    req.files ||
+    Object.keys(req.body).length > 0;
 
   if (!isMultipart) {
     return next();

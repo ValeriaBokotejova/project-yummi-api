@@ -1,7 +1,7 @@
 ﻿import bcryptjs from 'bcryptjs';
 import { User } from '../db/models/index.js';
 import { createToken } from '../utils/jwt.js';
-import { ValidationError, NotFoundError } from '../errors/DomainErrors.js';
+import { ValidationError } from '../errors/DomainErrors.js';
 
 const SALT_ROUNDS = 10;
 
@@ -55,16 +55,4 @@ export const loginUser = async payload => {
       avatarUrl: user.avatarUrl,
     },
   };
-};
-
-export const getUserById = async userId => {
-  const user = await User.findByPk(userId, {
-    attributes: { exclude: ['password'] },
-  });
-
-  if (!user) {
-    throw new NotFoundError('User');
-  }
-
-  return user;
 };

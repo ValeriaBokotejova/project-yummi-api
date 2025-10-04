@@ -1,5 +1,7 @@
 import { Ingredient } from '../db/models/index.js';
 
-export const listOfIngredients = async () => {
-  return await Ingredient.findAll();
+export const getAllIngredients = async () => {
+  return await Ingredient.findAll({
+    order: [['name', 'ASC']],
+  });
 };

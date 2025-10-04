@@ -1,138 +1,118 @@
-import { User, Recipe, Category, Area, Ingredient, Favorite } from '../db/models/index.js';
+import HttpError from '../utils/HttpError.js';
+import * as usersService from '../services/usersService.js';
 
-const toInt = (v, d) => {
-  const n = parseInt(v, 10);
-  return Number.isFinite(n) ? n : d;
+export const getCurrentUser = async (req, res, next) => {
+  try {
+    const { user } = req;
+
+    const currentUser = await usersService.getUserById(user.id);
+    const statistics = await usersService.getUserStatistics(user.id, {
+      includeFavorite: true,
+      includeFollowing: true,
+    });
+    if (!statistics) {
+      return next(HttpError(404, 'User not found'));
+    }
+    const { ownRecipesCount, favoriteIds, followersCount, followingIds } = statistics;
+    res.status(200).json({
+      id: currentUser.id,
+      email: currentUser.email,
+      name: currentUser.name,
+      avatarUrl: currentUser.avatarUrl,
+      ownRecipesCount,
+      favoriteIds,
+      followersCount,
+      followingIds,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
-// GET /users/:id/recipes
+export const getUserById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await usersService.getUserById(id);
+    if (!user) {
+      return next(HttpError(404, 'User not found'));
+    }
+    const statistics = await usersService.getUserStatistics(user.id);
+    if (!statistics) {
+      return next(HttpError(404, 'User not found'));
+    }
+    const { ownRecipesCount, followersCount } = statistics;
+    res.status(200).json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      ownRecipesCount,
+      followersCount,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadAvatar = async (req, res, next) => {
+  try {
+    const { user, file } = req;
+
+    if (!file) {
+      return next(HttpError(400, 'Avatar is required'));
+    }
+    const updatedUser = await usersService.uploadAvatar(user.id, file);
+    res.status(200).json({
+      avatarUrl: updatedUser.avatarUrl,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getUserRecipes = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const limit = Math.min(toInt(req.query.limit, 12), 50);
-    const page = Math.max(toInt(req.query.page, 1), 1);
-    const offset = (page - 1) * limit;
-    const sortBy = (req.query.sortBy || 'createdAt').toString();
-    const sortDir = ((req.query.sortDir || 'desc').toString().toUpperCase() === 'ASC') ? 'ASC' : 'DESC';
+    // Parse pagination parameters
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit, 10) || 12, 50);
 
-    const user = await User.findByPk(id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    // Parse sorting parameters
+    const sortBy = req.query.sortBy || 'createdAt';
+    const sortDir = req.query.sortDir || 'desc';
 
-    const order = [];
-    switch (sortBy) {
-      case 'title': order.push(['title', sortDir]); break;
-      case 'time': order.push(['time', sortDir]); break;
-      case 'createdAt':
-      default: order.push(['createdAt', sortDir]); break;
-    }
+    const pagination = { page, limit };
+    const sorting = { sortBy, sortDir };
 
-    const { count, rows } = await Recipe.findAndCountAll({
-      where: { ownerId: id },
-      include: [
-        { model: Category, as: 'category', attributes: ['id', 'name'] },
-        { model: Area, as: 'area', attributes: ['id', 'name'] },
-        {
-          model: Ingredient,
-          as: 'ingredients',
-          through: { attributes: ['measure'], as: 'RecipeIngredient' },
-          attributes: ['id', 'name'],
-        },
-      ],
-      attributes: { exclude: ['ownerId', 'categoryId', 'areaId'] },
-      order,
-      limit,
-      offset,
-      distinct: true,
-    });
+    const result = await usersService.getUserRecipes(id, pagination, sorting);
 
-    // Flatten measure on ingredients
-    const items = rows.map(r => {
-      const data = r.toJSON();
-      if (data.ingredients) {
-        data.ingredients = data.ingredients.map(i => ({
-          id: i.id, name: i.name, measure: i.RecipeIngredient?.measure || ''
-        }));
-      }
-      return data;
-    });
-
-    return res.status(200).json({
-      items,
-      totalCount: count,
-      page,
-      limit,
-    });
-  } catch (err) {
-    next(err);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
   }
 };
 
-// GET /users/:id/favorites
 export const getUserFavoriteRecipes = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const limit = Math.min(toInt(req.query.limit, 12), 50);
-    const page = Math.max(toInt(req.query.page, 1), 1);
-    const offset = (page - 1) * limit;
-    const sortBy = (req.query.sortBy || 'createdAt').toString();
-    const sortDir = ((req.query.sortDir || 'desc').toString().toUpperCase() === 'ASC') ? 'ASC' : 'DESC';
+    // Parse pagination parameters
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit, 10) || 12, 50);
 
-    const user = await User.findByPk(id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    // Parse sorting parameters
+    const sortBy = req.query.sortBy || 'createdAt';
+    const sortDir = req.query.sortDir || 'desc';
 
-    const order = [];
-    switch (sortBy) {
-      case 'title': order.push(['title', sortDir]); break;
-      case 'time': order.push(['time', sortDir]); break;
-      case 'createdAt':
-      default: order.push(['createdAt', sortDir]); break;
-    }
+    const pagination = { page, limit };
+    const sorting = { sortBy, sortDir };
 
-    const { count, rows } = await Recipe.findAndCountAll({
-      include: [
-        {
-          model: User,
-          as: 'usersWhoFavorited',
-          attributes: [],
-          through: { model: Favorite, attributes: [] },
-          where: { id },
-          required: true,
-        },
-        { model: Category, as: 'category', attributes: ['id', 'name'] },
-        { model: Area, as: 'area', attributes: ['id', 'name'] },
-        {
-          model: Ingredient,
-          as: 'ingredients',
-          through: { attributes: ['measure'], as: 'RecipeIngredient' },
-          attributes: ['id', 'name'],
-        },
-      ],
-      attributes: { exclude: ['ownerId', 'categoryId', 'areaId'] },
-      order,
-      limit,
-      offset,
-      distinct: true,
-    });
+    const result = await usersService.getUserFavoriteRecipes(id, pagination, sorting);
 
-    const items = rows.map(r => {
-      const data = r.toJSON();
-      if (data.ingredients) {
-        data.ingredients = data.ingredients.map(i => ({
-          id: i.id, name: i.name, measure: i.RecipeIngredient?.measure || ''
-        }));
-      }
-      return data;
-    });
-
-    return res.status(200).json({
-      items,
-      totalCount: count,
-      page,
-      limit,
-    });
-  } catch (err) {
-    next(err);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
   }
 };

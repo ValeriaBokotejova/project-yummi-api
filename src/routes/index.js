@@ -35,5 +35,4 @@ router.use('/ingredients', ingredientsRouter);
 
 router.use('/testimonials', testimonialsRouter);
 
-
 export default router;

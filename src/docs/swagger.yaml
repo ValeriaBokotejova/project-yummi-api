@@ -42,19 +42,25 @@ paths:
             schema:
               type: object
               required:
-                - username
+                - name
                 - email
                 - password
               properties:
-                username:
+                name:
                   type: string
-                  example: john_doe
+                  minLength: 3
+                  maxLength: 30
+                  description: User's full name
+                  example: John Doe
                 email:
                   type: string
                   format: email
+                  description: User's email address
                   example: user@example.com
                 password:
                   type: string
+                  minLength: 8
+                  description: User's password (minimum 8 characters)
                   example: SecurePassword123
       responses:
         '201':
@@ -99,27 +105,6 @@ paths:
                 $ref: '#/components/schemas/AuthResponse'
         '401':
           description: Invalid credentials
-
-  /auth/current:
-    get:
-      summary: Get current user
-      description: Get current authenticated user information
-      tags: [Authentication]
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Current user information
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '401':
-          description: |
-            Unauthorized:
-            - Missing Authorization header
-            - Invalid or expired JWT token
-            - Authorization header format must be: Bearer <token>
 
   /auth/logout:
     post:
@@ -197,7 +182,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  avatarURL:
+                  avatarUrl:
                     type: string
                     format: uri
         '400':
@@ -372,17 +357,17 @@ paths:
                   minLength: 1
                   maxLength: 200
                   description: Recipe title
-                  example: "Apam balik"
+                  example: 'Apam balik'
                 description:
                   type: string
                   maxLength: 1000
                   description: Recipe description (optional)
-                  example: "A popular Malaysian dessert made with a crispy and fluffy pancake-like batter"
+                  example: 'A popular Malaysian dessert made with a crispy and fluffy pancake-like batter'
                 instructions:
                   type: string
                   minLength: 1
                   description: Detailed cooking instructions
-                  example: "Mix milk, oil and egg together. Sift flour, baking powder and salt into the mixture..."
+                  example: 'Mix milk, oil and egg together. Sift flour, baking powder and salt into the mixture...'
                 time:
                   type: integer
                   minimum: 1
@@ -392,12 +377,12 @@ paths:
                   type: string
                   format: uuid
                   description: Category UUID (required)
-                  example: "33805d4f-57c6-433a-a529-f5d1da6bbf30"
+                  example: '33805d4f-57c6-433a-a529-f5d1da6bbf30'
                 areaId:
                   type: string
                   format: uuid
                   description: Area UUID (optional)
-                  example: "c43dcaae-2dc4-4de1-9a82-05307801d247"
+                  example: 'c43dcaae-2dc4-4de1-9a82-05307801d247'
                 ingredients:
                   type: string
                   description: |
@@ -501,17 +486,17 @@ paths:
       summary: Update recipe
       description: |
         Private endpoint for updating own recipe with optional image upload.
-        
+
         **Authentication Required**: Bearer JWT token in Authorization header
-        
+
         **File Upload Constraints** (optional):
         - Maximum file size: 5MB
         - Accepted formats: image/* (JPEG, PNG, GIF, WebP, etc.)
         - Field name: 'image'
-        
+
         **Request Format**: multipart/form-data (to support optional image upload)
-        
-        **Note**: 
+
+        **Note**:
         - All fields are optional for updates
         - The ingredients field should be a JSON string array containing objects with 'id' and 'measure' properties
         - If no image is provided, the existing image will be kept
@@ -538,17 +523,17 @@ paths:
                   minLength: 1
                   maxLength: 200
                   description: Recipe title (optional)
-                  example: "Updated Apam balik"
+                  example: 'Updated Apam balik'
                 description:
                   type: string
                   maxLength: 1000
                   description: Recipe description (optional)
-                  example: "An updated description of this Malaysian dessert"
+                  example: 'An updated description of this Malaysian dessert'
                 instructions:
                   type: string
                   minLength: 1
                   description: Detailed cooking instructions (optional)
-                  example: "Updated cooking instructions..."
+                  example: 'Updated cooking instructions...'
                 time:
                   type: integer
                   minimum: 1
@@ -558,12 +543,12 @@ paths:
                   type: string
                   format: uuid
                   description: Category UUID (optional)
-                  example: "33805d4f-57c6-433a-a529-f5d1da6bbf30"
+                  example: '33805d4f-57c6-433a-a529-f5d1da6bbf30'
                 areaId:
                   type: string
                   format: uuid
                   description: Area UUID (optional)
-                  example: "c43dcaae-2dc4-4de1-9a82-05307801d247"
+                  example: 'c43dcaae-2dc4-4de1-9a82-05307801d247'
                 ingredients:
                   type: string
                   description: |
@@ -916,9 +901,44 @@ components:
     UserMe:
       allOf:
         - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            ownRecipesCount:
+              type: integer
+              description: Number of recipes created by user
+              example: 5
+            favoriteIds:
+              type: array
+              description: Array of favorite recipe IDs
+              items:
+                type: string
+                format: uuid
+              example: ['f2f2d205-f944-4a70-aa2a-6d565d48af7e', 'a1b2c3d4-5e6f-7890-abcd-ef1234567890']
+            followersCount:
+              type: integer
+              description: Number of users following this user
+              example: 25
+            followingIds:
+              type: array
+              description: Array of user IDs this user is following
+              items:
+                type: string
+                format: uuid
+              example: ['9cec30f7-9bb2-4109-a328-814e125498c4', 'e70a4a91-7811-4062-8a13-dfcd5e8bc546']
+
     UserDetail:
       allOf:
         - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            ownRecipesCount:
+              type: integer
+              description: Number of recipes created by user
+              example: 5
+            followersCount:
+              type: integer
+              description: Number of users following this user
+              example: 25
 
     Category:
       type: object
@@ -970,38 +990,84 @@ components:
         id:
           type: string
           format: uuid
+          example: 'f2f2d205-f944-4a70-aa2a-6d565d48af7e'
         title:
           type: string
+          example: 'Apam balik'
         description:
           type: string
+          example: 'A popular Malaysian dessert made with a crispy and fluffy pancake-like batter'
+        instructions:
+          type: string
+          description: Detailed cooking instructions
+          example: 'Mix milk, oil and egg together. Sift flour, baking powder and salt into the mixture...'
+        thumbUrl:
+          type: string
+          format: uri
+          description: URL to recipe image
+          example: 'https://ftp.goit.study/img/so-yummy/preview/Apam%20balik.jpg'
         time:
           type: integer
           description: Cooking time in minutes
-        areaId:
-          type: string
-          format: uuid
-        categoryId:
-          type: string
-          format: uuid
-        ingredients:
-          type: array
-          items:
-            type: string
-        instructions:
-          type: array
-          items:
-            type: string
-        favoritesCount:
-          type: integer
-        authorId:
-          type: string
-          format: uuid
+          example: 10
         createdAt:
           type: string
           format: date-time
+          example: '2023-03-11T19:25:33.248Z'
         updatedAt:
           type: string
           format: date-time
+          example: '2023-11-20T19:40:11.983Z'
+        owner:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: '9cec30f7-9bb2-4109-a328-814e125498c4'
+            name:
+              type: string
+              example: 'GoIT'
+            avatarUrl:
+              type: string
+              format: uri
+              nullable: true
+              example: null
+        category:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: '33805d4f-57c6-433a-a529-f5d1da6bbf30'
+            name:
+              type: string
+              example: 'Dessert'
+        area:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 'c43dcaae-2dc4-4de1-9a82-05307801d247'
+            name:
+              type: string
+              example: 'Malaysian'
+        ingredients:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                example: 'be4695eb-740b-470e-8b58-e8f07bfa8ba5'
+              name:
+                type: string
+                example: 'Milk'
+              measure:
+                type: string
+                example: '200ml'
 
     CreateRecipeRequest:
       type: object
