@@ -7,7 +7,8 @@ info:
 servers:
   - url: /api
     description: Same-origin API
-
+  - url: https://project-yummi-api.onrender.com/api
+    description: Production API
 paths:
   /health:
     get:
