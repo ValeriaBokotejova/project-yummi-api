@@ -746,7 +746,8 @@ paths:
 
   /users/{id}/followers:
     get:
-      summary: Get user's followers
+      summary: Get user's followers with their latest recipes
+      description: Get a paginated list of users who follow the specified user, including up to 4 latest recipes for each follower
       tags: [Users]
       parameters:
         - in: path
@@ -767,7 +768,7 @@ paths:
             default: 20
       responses:
         '200':
-          description: Followers list
+          description: Followers list with their latest recipes
           content:
             application/json:
               schema:
@@ -777,7 +778,8 @@ paths:
 
   /users/{id}/following:
     get:
-      summary: Get user's following
+      summary: Get user's following with their latest recipes
+      description: Get a paginated list of users that the specified user is following, including up to 4 latest recipes for each followed user
       tags: [Users]
       parameters:
         - in: path
@@ -798,7 +800,7 @@ paths:
             default: 20
       responses:
         '200':
-          description: Following list
+          description: Following list with their latest recipes
           content:
             application/json:
               schema:
@@ -1137,6 +1139,31 @@ components:
                 type: string
                 nullable: true
                 example: null
+              ownRecipesCount:
+                type: integer
+                description: Total number of recipes created by this user
+                example: 12
+              latestRecipes:
+                type: array
+                description: Up to 4 latest recipes from this user
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      example: f2f2d205-f944-4a70-aa2a-6d565d48af7e
+                    thumbUrl:
+                      type: string
+                      format: uri
+                      example: https://ftp.goit.study/img/so-yummy/preview/Apam%20balik.jpg
+                    title:
+                      type: string
+                      example: Apam balik
+                example:
+                  - id: f2f2d205-f944-4a70-aa2a-6d565d48af7e
+                    thumbUrl: https://ftp.goit.study/img/so-yummy/preview/Apam%20balik.jpg
+                    title: Apam balik
         totalCount:
           type: integer
           example: 1

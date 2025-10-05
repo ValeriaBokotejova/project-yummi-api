@@ -17,10 +17,10 @@ usersRouter.get('/me', authenticate, getCurrentUser);
 
 usersRouter.patch('/avatar', authenticate, upload.single('avatar'), uploadAvatar);
 
-usersRouter.get('/:id', getUserById);
+usersRouter.get('/:id', authenticate, getUserById);
 
-usersRouter.get('/:id/recipes', validateQuery(listParamsSchema), getUserRecipes);
+usersRouter.get('/:id/recipes', authenticate, validateQuery(listParamsSchema), getUserRecipes);
 
-usersRouter.get('/:id/favorites', validateQuery(listParamsSchema), getUserFavoriteRecipes);
+usersRouter.get('/:id/favorites', authenticate, validateQuery(listParamsSchema), getUserFavoriteRecipes);
 
 export default usersRouter;

@@ -13,16 +13,12 @@ export const getCurrentUser = async (req, res, next) => {
     if (!statistics) {
       return next(HttpError(404, 'User not found'));
     }
-    const { ownRecipesCount, favoriteIds, followersCount, followingIds } = statistics;
     res.status(200).json({
       id: currentUser.id,
       email: currentUser.email,
       name: currentUser.name,
       avatarUrl: currentUser.avatarUrl,
-      ownRecipesCount,
-      favoriteIds,
-      followersCount,
-      followingIds,
+      ...statistics
     });
   } catch (error) {
     next(error);
@@ -31,24 +27,26 @@ export const getCurrentUser = async (req, res, next) => {
 
 export const getUserById = async (req, res, next) => {
   try {
+    const { user: currentUser } = req;
     const { id } = req.params;
 
     const user = await usersService.getUserById(id);
     if (!user) {
       return next(HttpError(404, 'User not found'));
     }
-    const statistics = await usersService.getUserStatistics(user.id);
+    const statistics = await usersService.getUserStatistics(user.id, {
+      includeFavorite: currentUser.id === user.id,
+      includeFollowing: currentUser.id === user.id,
+    });
     if (!statistics) {
       return next(HttpError(404, 'User not found'));
     }
-    const { ownRecipesCount, followersCount } = statistics;
     res.status(200).json({
       id: user.id,
       email: user.email,
       name: user.name,
       avatarUrl: user.avatarUrl,
-      ownRecipesCount,
-      followersCount,
+      ...statistics
     });
   } catch (error) {
     next(error);

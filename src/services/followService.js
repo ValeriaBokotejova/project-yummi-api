@@ -1,42 +1,139 @@
-import { User, Follow } from '../db/models/index.js';
+import { User, Follow, Recipe } from '../db/models/index.js';
+import sequelize from '../db/connection.js';
 import { NotFoundError, DuplicateError, UnauthorizedError } from '../errors/DomainErrors.js';
 
 export const getFollowers = async (userId, { page = 1, limit = 20 } = {}) => {
-  const user = await User.findByPk(userId, { raw: false });
-  if (!user) throw new NotFoundError('User');
-
+  // Get users who follow the specified user, along with their recipes
   const offset = (page - 1) * limit;
 
-  const [items, totalCount] = await Promise.all([
-    user.getFollowers({
+  // First, verify user exists
+  const userExists = await User.findByPk(userId, { attributes: ['id'] });
+  if (!userExists) throw new NotFoundError('User');
+
+  // Get followers with their recipes
+  const [followers, totalCount] = await Promise.all([
+    User.findAll({
+      include: [
+        {
+          model: User,
+          as: 'following',
+          where: { id: userId },
+          attributes: [],
+          through: { attributes: [] },
+          required: true,
+        },
+        {
+          model: Recipe,
+          as: 'recipes',
+          attributes: ['id', 'thumbUrl', 'title'],
+          limit: 4,
+          order: [['createdAt', 'DESC']],
+          separate: true,
+          required: false,
+        },
+      ],
       attributes: ['id', 'name', 'avatarUrl'],
-      joinTableAttributes: [],
       limit,
       offset,
-      raw: false,
+      subQuery: false,
     }),
-    user.countFollowers({ distinct: true }),
+    Follow.count({ where: { followingId: userId } })
   ]);
+
+  // Get recipe counts for all followers in a single query
+  const userIds = followers.map(user => user.id);
+  const recipeCounts = await Recipe.findAll({
+    where: { ownerId: userIds },
+    attributes: [
+      'ownerId',
+      [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+    ],
+    group: ['ownerId'],
+    raw: true
+  });
+
+  // Create a map for quick lookup
+  const recipeCountMap = recipeCounts.reduce((map, item) => {
+    map[item.ownerId] = parseInt(item.count);
+    return map;
+  }, {});
+
+  // Transform the response to include latestRecipes field and ownRecipesCount
+  const items = followers.map(user => ({
+    id: user.id,
+    name: user.name,
+    avatarUrl: user.avatarUrl,
+    latestRecipes: user.recipes || [],
+    ownRecipesCount: recipeCountMap[user.id] || 0
+  }));
 
   return { items, totalCount };
 };
 
 export const getFollowing = async (userId, { page = 1, limit = 20 } = {}) => {
-  const user = await User.findByPk(userId, { raw: false });
-  if (!user) throw new NotFoundError('User');
-
+  // Get users that the specified user is following, along with their recipes
   const offset = (page - 1) * limit;
 
-  const [items, totalCount] = await Promise.all([
-    user.getFollowing({
+  // First, verify user exists
+  const userExists = await User.findByPk(userId, { attributes: ['id'] });
+  if (!userExists) throw new NotFoundError('User');
+
+  // Get following users with their recipes
+  const [following, totalCount] = await Promise.all([
+    User.findAll({
+      include: [
+        {
+          model: User,
+          as: 'followers',
+          where: { id: userId },
+          attributes: [],
+          through: { attributes: [] },
+          required: true,
+        },
+        {
+          model: Recipe,
+          as: 'recipes',
+          attributes: ['id', 'thumbUrl', 'title'],
+          limit: 4,
+          order: [['createdAt', 'DESC']],
+          separate: true,
+          required: false,
+        },
+      ],
       attributes: ['id', 'name', 'avatarUrl'],
-      joinTableAttributes: [],
       limit,
       offset,
-      raw: false,
+      subQuery: false,
     }),
-    user.countFollowing({ distinct: true }),
+    Follow.count({ where: { followerId: userId } })
   ]);
+
+  // Get recipe counts for all following users in a single query
+  const userIds = following.map(user => user.id);
+  const recipeCounts = await Recipe.findAll({
+    where: { ownerId: userIds },
+    attributes: [
+      'ownerId',
+      [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+    ],
+    group: ['ownerId'],
+    raw: true
+  });
+
+  // Create a map for quick lookup
+  const recipeCountMap = recipeCounts.reduce((map, item) => {
+    map[item.ownerId] = parseInt(item.count);
+    return map;
+  }, {});
+
+  // Transform the response to include latestRecipes field and ownRecipesCount
+  const items = following.map(user => ({
+    id: user.id,
+    name: user.name,
+    avatarUrl: user.avatarUrl,
+    latestRecipes: user.recipes || [],
+    ownRecipesCount: recipeCountMap[user.id] || 0
+  }));
 
   return { items, totalCount };
 };
